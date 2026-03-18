@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>iTrucker's Co-Driver uses your microphone to listen for voice commands so you can keep your hands on the wheel and eyes on the road.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>iTrucker's Co-Driver uses speech recognition to understand your voice commands for navigation, fuel stops, rest areas, hours of service logging, and more.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>iTrucker's Co-Driver uses your location to find nearby fuel stops, rest areas, truck stops, and to provide accurate weather conditions along your route.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>iTrucker's Co-Driver can monitor your heart rate, heart rate variability, and sleep to detect fatigue and help you stay safe on long hauls. This is opt-in only — your raw health data never leaves your device.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>iTrucker's Co-Driver does not write health data. This permission is requested by the HealthKit framework but not used.</string>
+</dict>
+</plist>
