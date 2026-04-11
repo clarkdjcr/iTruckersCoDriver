@@ -11,15 +11,15 @@ import SwiftData
 
 @Model
 final class MaintenanceReport {
-    var id: UUID
-    var driverID: String
-    var vehicleID: String
-    var timestamp: Date
-    var issueDescription: String
-    var severity: String    // "low", "medium", "high"
-    var resolved: Bool
+    var id: UUID = UUID()
+    var driverID: String = ""
+    var vehicleID: String = ""
+    var timestamp: Date = Date()
+    var issueDescription: String = ""
+    var severity: String = "medium"
+    var resolved: Bool = false
     var resolvedDate: Date?
-    var resolvedNotes: String
+    var resolvedNotes: String = ""
 
     init(
         driverID: String,

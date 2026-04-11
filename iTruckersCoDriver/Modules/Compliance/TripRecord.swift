@@ -10,17 +10,17 @@ import SwiftData
 
 @Model
 final class TripRecord {
-    var id: UUID
-    var startDate: Date
+    var id: UUID = UUID()
+    var startDate: Date = Date()
     var endDate: Date?
-    var origin: String
-    var destination: String
-    var miles: Double
-    var fuelGallons: Double
-    var grossRevenue: Double
-    var notes: String
+    var origin: String = ""
+    var destination: String = ""
+    var miles: Double = 0
+    var fuelGallons: Double = 0
+    var grossRevenue: Double = 0
+    var notes: String = ""
     // IFTA state-by-state mileage stored as JSON string
-    var stateMileageJSON: String
+    var stateMileageJSON: String = "{}"
 
     init(origin: String, destination: String) {
         self.id = UUID()

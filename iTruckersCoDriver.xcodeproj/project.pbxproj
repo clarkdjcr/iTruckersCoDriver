@@ -406,12 +406,12 @@
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = iTruckersCoDriver/iTruckersCoDriver.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
@@ -425,6 +425,11 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iTruckersCoDriver/Info.plist;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "iTrucker's Co-Driver can monitor your heart rate, heart rate variability, and sleep to detect fatigue and help you stay safe on long hauls. This is opt-in only — your raw health data never leaves your device.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "iTrucker's Co-Driver does not write health data. This permission is requested by the HealthKit framework but not used.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "iTrucker's Co-Driver uses your location to find nearby fuel stops, rest areas, truck stops, and to provide accurate weather conditions along your route.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "iTrucker's Co-Driver uses your microphone to listen for voice commands so you can keep your hands on the wheel and eyes on the road.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "iTrucker's Co-Driver uses speech recognition to understand your voice commands for navigation, fuel stops, rest areas, hours of service logging, and more.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -470,12 +475,12 @@
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = iTruckersCoDriver/iTruckersCoDriver.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
@@ -489,6 +494,11 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iTruckersCoDriver/Info.plist;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "iTrucker's Co-Driver can monitor your heart rate, heart rate variability, and sleep to detect fatigue and help you stay safe on long hauls. This is opt-in only — your raw health data never leaves your device.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "iTrucker's Co-Driver does not write health data. This permission is requested by the HealthKit framework but not used.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "iTrucker's Co-Driver uses your location to find nearby fuel stops, rest areas, truck stops, and to provide accurate weather conditions along your route.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "iTrucker's Co-Driver uses your microphone to listen for voice commands so you can keep your hands on the wheel and eyes on the road.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "iTrucker's Co-Driver uses speech recognition to understand your voice commands for navigation, fuel stops, rest areas, hours of service logging, and more.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -531,7 +541,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -557,7 +567,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -582,7 +592,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -607,7 +617,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;

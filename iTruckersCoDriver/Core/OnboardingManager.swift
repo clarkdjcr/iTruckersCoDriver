@@ -42,9 +42,8 @@ class OnboardingManager: ObservableObject {
         isValidatingKey = false
     }
 
-    func completeOnboarding(account: DriverAccount, name: String, cdlNumber: String, cdlState: String) {
+    func completeOnboarding(account: DriverAccount, name: String, cdlState: String) {
         account.name = name.isEmpty ? "Driver" : name
-        account.cdlNumber = cdlNumber
         account.cdlState = cdlState
         account.onboardingComplete = true
     }

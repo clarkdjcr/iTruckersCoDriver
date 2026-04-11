@@ -2,15 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.navigation</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>iTrucker's Co-Driver uses your microphone to listen for voice commands so you can keep your hands on the wheel and eyes on the road.</string>
+	<string>Co-Driver uses the microphone to hear your voice commands so it can assist you hands-free while driving.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>iTrucker's Co-Driver uses speech recognition to understand your voice commands for navigation, fuel stops, rest areas, hours of service logging, and more.</string>
+	<string>Co-Driver uses speech recognition to convert your voice to text so the AI can respond to your questions and commands.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>iTrucker's Co-Driver uses your location to find nearby fuel stops, rest areas, truck stops, and to provide accurate weather conditions along your route.</string>
+	<string>Co-Driver uses your location to find nearby fuel stops, rest areas, and to provide accurate weather and routing information.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>iTrucker's Co-Driver can monitor your heart rate, heart rate variability, and sleep to detect fatigue and help you stay safe on long hauls. This is opt-in only — your raw health data never leaves your device.</string>
+	<string>Co-Driver reads heart rate, HRV, and sleep data to calculate a fatigue score and help keep you safe on the road.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>iTrucker's Co-Driver does not write health data. This permission is requested by the HealthKit framework but not used.</string>
+	<string>Co-Driver may write health data to Apple Health as part of fatigue monitoring and driver wellness tracking.</string>
 </dict>
 </plist>

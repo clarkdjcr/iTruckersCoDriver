@@ -10,16 +10,16 @@ import SwiftData
 
 @Model
 final class DeliveryContact {
-    var id: UUID
-    var contactName: String
-    var company: String
-    var phone: String
-    var email: String
-    var address: String
-    var associatedLoadNumber: String
-    var preferredContactMethod: String  // "phone", "email", "sms"
-    var driverID: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var contactName: String = ""
+    var company: String = ""
+    var phone: String = ""
+    var email: String = ""
+    var address: String = ""
+    var associatedLoadNumber: String = ""
+    var preferredContactMethod: String = "phone"
+    var driverID: String = ""
+    var createdAt: Date = Date()
 
     init(
         contactName: String,

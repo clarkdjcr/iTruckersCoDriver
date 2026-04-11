@@ -271,16 +271,37 @@ protocol ClaudeToolHandler: AnyObject {
 
 // MARK: - Claude Service
 
-class ClaudeService {
-    weak var toolHandler: ClaudeToolHandler?
+class ClaudeService: CoDriverAIService {
+    weak var toolHandler: (any ClaudeToolHandler)?
+    /// Set by VoiceManager before each call when the Claude backend is active.
+    var apiKey: String?
     private let baseURL = "https://api.anthropic.com/v1/messages"
     private let apiVersion = "2023-06-01"
     private let model = "claude-opus-4-6"
 
-    // MARK: - Main entry point
+    // MARK: - CoDriverAIService
 
-    /// Send a user message and receive a streaming response.
-    /// Returns the full assistant response text after the tool use loop completes.
+    func resetConversation() {
+        // Claude is stateless — conversation history is managed by DriverState.
+    }
+
+    func sendMessage(
+        _ text: String,
+        history: [ConversationMessage],
+        onPartialResponse: @escaping (String) -> Void
+    ) async throws -> String {
+        guard let key = apiKey, !key.isEmpty else {
+            throw AIServiceError.noAPIKey
+        }
+        var messages: [[String: Any]] = history.map { msg in
+            ["role": msg.role, "content": msg.content]
+        }
+        messages.append(["role": "user", "content": text])
+        return try await runToolLoop(messages: messages, apiKey: key, onPartialResponse: onPartialResponse)
+    }
+
+    // MARK: - Legacy entry point (kept for any direct callers)
+
     func sendMessage(
         userText: String,
         history: [ConversationMessage],

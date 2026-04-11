@@ -35,18 +35,30 @@ struct iTruckersCoDriverApp: App {
             MaintenanceItem.self,
             MaintenanceReport.self,
         ])
-        let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .automatic
-        )
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            // Fallback to local storage if CloudKit is unavailable
-            let localConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            return try! ModelContainer(for: schema, configurations: [localConfig])
+
+        // Local persistent store. CloudKit (.automatic) is intentionally disabled until
+        // the Xcode capability is configured and all @Model properties have defaults.
+        let localConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        if let container = try? ModelContainer(for: schema, configurations: [localConfig]) {
+            return container
         }
+
+        // Schema changed (major refactor) — delete stale store and start fresh.
+        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            for name in ["default.store", "default.store-shm", "default.store-wal"] {
+                try? FileManager.default.removeItem(at: appSupport.appending(path: name))
+            }
+        }
+        if let container = try? ModelContainer(for: schema, configurations: [localConfig]) {
+            return container
+        }
+
+        // In-memory fallback — app launches but data won't persist this session.
+        let memConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        guard let container = try? ModelContainer(for: schema, configurations: [memConfig]) else {
+            fatalError("SwiftData schema is invalid — check @Model definitions.")
+        }
+        return container
     }()
 
     var body: some Scene {

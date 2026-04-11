@@ -11,15 +11,15 @@ import SwiftData
 
 @Model
 final class VehicleMetrics {
-    var id: UUID
-    var timestamp: Date
-    var driverID: String
-    var latitude: Double
-    var longitude: Double
-    var speedMPH: Double
-    var fuelLevelGallons: Double
-    var fuelCapacityGallons: Double
-    var odometer: Double    // miles
+    var id: UUID = UUID()
+    var timestamp: Date = Date()
+    var driverID: String = ""
+    var latitude: Double = 0
+    var longitude: Double = 0
+    var speedMPH: Double = 0
+    var fuelLevelGallons: Double = 0
+    var fuelCapacityGallons: Double = 150
+    var odometer: Double = 0
 
     init(
         driverID: String,

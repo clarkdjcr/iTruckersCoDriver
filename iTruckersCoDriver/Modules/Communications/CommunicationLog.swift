@@ -11,15 +11,15 @@ import SwiftData
 
 @Model
 final class CommunicationLog {
-    var id: UUID
-    var timestamp: Date
-    var driverID: String
-    var contactName: String
-    var loadNumber: String
-    var direction: String   // "outbound", "inbound"
-    var channel: String     // "phone", "email", "sms", "voice"
-    var content: String
-    var confirmed: Bool     // customer confirmed receipt/ETA
+    var id: UUID = UUID()
+    var timestamp: Date = Date()
+    var driverID: String = ""
+    var contactName: String = ""
+    var loadNumber: String = ""
+    var direction: String = "outbound"
+    var channel: String = "phone"
+    var content: String = ""
+    var confirmed: Bool = false
 
     init(
         driverID: String,

@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import FoundationModels
 
 // MARK: - Conversation message model
 
@@ -39,6 +40,9 @@ class AppState: ObservableObject {
     @Published var healthMonitoringEnabled: Bool {
         didSet { UserDefaults.standard.set(healthMonitoringEnabled, forKey: "healthMonitoringEnabled") }
     }
+    @Published var activeBackend: AIBackend {
+        didSet { UserDefaults.standard.set(activeBackend.rawValue, forKey: "aiBackend") }
+    }
 
     /// Stable per-device UUID. Created once and persisted — identifies this driver in CloudKit.
     let driverID: String
@@ -57,6 +61,17 @@ class AppState: ObservableObject {
             UserDefaults.standard.set(newID, forKey: "driverID")
             self.driverID = newID
         }
+
+        // Default to Apple Intelligence when available; fall back to Claude otherwise.
+        let savedRaw = UserDefaults.standard.string(forKey: "aiBackend")
+        let savedBackend: AIBackend? = savedRaw.flatMap { AIBackend(rawValue: $0) }
+        let supportsAppleIntelligence: Bool
+        if case .available = SystemLanguageModel.default.availability {
+            supportsAppleIntelligence = true
+        } else {
+            supportsAppleIntelligence = false
+        }
+        self.activeBackend = savedBackend ?? (supportsAppleIntelligence ? .appleIntelligence : .claude)
     }
 
     var apiKey: String? {
@@ -64,6 +79,12 @@ class AppState: ObservableObject {
     }
 
     var hasAPIKey: Bool { apiKey != nil && !(apiKey!.isEmpty) }
+
+    /// Whether this device can run Apple Intelligence at runtime.
+    var isAppleIntelligenceAvailable: Bool {
+        if case .available = SystemLanguageModel.default.availability { return true }
+        return false
+    }
 }
 
 // MARK: - HOS Types

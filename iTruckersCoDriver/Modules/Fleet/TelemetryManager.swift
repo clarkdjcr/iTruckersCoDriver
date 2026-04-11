@@ -60,20 +60,31 @@ class TelemetryManager: NSObject, ObservableObject {
     // MARK: - Private
 
     private func startTelemetry() {
-        telemetryTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.writeTelemetrySnapshot()
+        // Timer.scheduledTimer requires the main run loop to fire reliably.
+        DispatchQueue.main.async { [weak self] in
+            self?.telemetryTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                self?.writeTelemetrySnapshot()
+            }
         }
     }
 
     private func recalculateRange() {
         estimatedRangeMiles = fuelLevelGallons * avgMPG
-        driverState?.estimatedRange = estimatedRangeMiles
+        let range = estimatedRangeMiles
+        DispatchQueue.main.async { [weak self] in
+            self?.driverState?.estimatedRange = range
+        }
     }
 
     private func pushToDriverState() {
-        driverState?.currentSpeedMPH = currentSpeedMPH
-        driverState?.fuelLevel = fuelPercent
-        driverState?.estimatedRange = estimatedRangeMiles
+        let speed = currentSpeedMPH
+        let fuel = fuelPercent
+        let range = estimatedRangeMiles
+        DispatchQueue.main.async { [weak self] in
+            self?.driverState?.currentSpeedMPH = speed
+            self?.driverState?.fuelLevel = fuel
+            self?.driverState?.estimatedRange = range
+        }
     }
 
     private func loadAvgMPG() {

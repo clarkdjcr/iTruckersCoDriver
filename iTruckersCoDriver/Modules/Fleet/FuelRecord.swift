@@ -10,14 +10,14 @@ import SwiftData
 
 @Model
 final class FuelRecord {
-    var id: UUID
-    var date: Date
-    var driverID: String
-    var gallons: Double
-    var pricePerGallon: Double
-    var odometer: Double
-    var stateCode: String   // two-letter state code for IFTA
-    var stationName: String
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var driverID: String = ""
+    var gallons: Double = 0
+    var pricePerGallon: Double = 0
+    var odometer: Double = 0
+    var stateCode: String = ""
+    var stationName: String = ""
 
     init(
         driverID: String,

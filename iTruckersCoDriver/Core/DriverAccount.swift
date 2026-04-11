@@ -11,13 +11,13 @@ import SwiftData
 
 @Model
 final class DriverAccount {
-    var driverID: String
-    var name: String
-    var cdlNumber: String
-    var cdlState: String
-    var cloudFolderID: String
-    var onboardingComplete: Bool
-    var companyID: String
+    var driverID: String = ""
+    var name: String = ""
+    var cdlNumber: String = ""
+    var cdlState: String = ""
+    var cloudFolderID: String = ""
+    var onboardingComplete: Bool = false
+    var companyID: String = ""
 
     init(driverID: String, name: String = "") {
         self.driverID = driverID

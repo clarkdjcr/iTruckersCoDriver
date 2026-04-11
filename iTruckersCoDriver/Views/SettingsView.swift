@@ -45,51 +45,78 @@ struct SettingsView: View {
     @ViewBuilder
     private var aiConfigSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Claude API Key", systemImage: "key.fill")
-                    .font(.headline)
-                Text("Required for AI voice interaction. Get your key at console.anthropic.com")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                HStack {
-                    if showAPIKey {
-                        TextField("sk-ant-...", text: $apiKeyInput)
-                            .autocorrectionDisabled()
-                            #if os(iOS)
-                            .textInputAutocapitalization(.never)
-                            #endif
-                    } else {
-                        SecureField("sk-ant-...", text: $apiKeyInput)
-                            .autocorrectionDisabled()
-                    }
-                    Button {
-                        showAPIKey.toggle()
-                    } label: {
-                        Image(systemName: showAPIKey ? "eye.slash" : "eye")
-                            .foregroundColor(.secondary)
+            // Backend picker (only shown when Apple Intelligence is available)
+            if appState.isAppleIntelligenceAvailable {
+                Picker("AI Backend", selection: $appState.activeBackend) {
+                    ForEach(AIBackend.allCases, id: \.self) { backend in
+                        Label(backend.displayName, systemImage: backend.iconName)
+                            .tag(backend)
                     }
                 }
-                .padding(10)
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(8)
+                .pickerStyle(.segmented)
+                .padding(.vertical, 4)
 
+                if appState.activeBackend == .appleIntelligence {
+                    HStack {
+                        Image(systemName: "lock.shield.fill").foregroundColor(.green)
+                        Text("On-device · No API key required · Works offline")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                }
+            } else {
                 HStack {
-                    if appState.hasAPIKey {
-                        Label("API key configured", systemImage: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundColor(.green)
-                    }
-                    Spacer()
-                    if appState.hasAPIKey {
-                        Button("Remove", role: .destructive) {
-                            KeychainHelper.delete(forKey: KeychainHelper.anthropicAPIKey)
-                            apiKeyInput = ""
-                        }
-                        .font(.caption)
-                    }
+                    Image(systemName: "info.circle").foregroundColor(.blue)
+                    Text("Apple Intelligence requires iPhone 15 Pro or later.")
+                        .font(.caption).foregroundColor(.secondary)
                 }
             }
-            .padding(.vertical, 4)
+
+            // Claude API key — shown when Claude is selected or Apple Intelligence unavailable
+            if appState.activeBackend == .claude || !appState.isAppleIntelligenceAvailable {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Claude API Key", systemImage: "key.fill")
+                        .font(.subheadline).fontWeight(.medium)
+                    Text("Get your key at console.anthropic.com")
+                        .font(.caption).foregroundColor(.secondary)
+                    HStack {
+                        if showAPIKey {
+                            TextField("sk-ant-...", text: $apiKeyInput)
+                                .autocorrectionDisabled()
+                                #if os(iOS)
+                                .textInputAutocapitalization(.never)
+                                #endif
+                        } else {
+                            SecureField("sk-ant-...", text: $apiKeyInput)
+                                .autocorrectionDisabled()
+                        }
+                        Button {
+                            showAPIKey.toggle()
+                        } label: {
+                            Image(systemName: showAPIKey ? "eye.slash" : "eye")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(10)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(8)
+
+                    HStack {
+                        if appState.hasAPIKey {
+                            Label("API key configured", systemImage: "checkmark.circle.fill")
+                                .font(.caption).foregroundColor(.green)
+                        }
+                        Spacer()
+                        if appState.hasAPIKey {
+                            Button("Remove", role: .destructive) {
+                                KeychainHelper.delete(forKey: KeychainHelper.anthropicAPIKey)
+                                apiKeyInput = ""
+                            }
+                            .font(.caption)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         } header: {
             Text("AI Configuration")
         }
@@ -142,13 +169,13 @@ struct SettingsView: View {
             HStack {
                 Text("Version")
                 Spacer()
-                Text("1.0.0")
+                Text("1.0 (2)")
                     .foregroundColor(.secondary)
             }
             HStack {
                 Text("AI Model")
                 Spacer()
-                Text("Claude Opus 4.6")
+                Text(appState.activeBackend.modelLabel)
                     .foregroundColor(.secondary)
             }
             Link("Anthropic Console", destination: URL(string: "https://console.anthropic.com")!)

@@ -19,7 +19,7 @@ class VoiceManager: NSObject, ObservableObject {
     @Published var permissionsGranted = false
 
     // Set by DriverView
-    weak var appState: AppState?       // for API key (shared session)
+    weak var appState: AppState?       // for API key + active backend selection
     weak var driverState: DriverState? // for conversation, HOS, duty status
 
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
@@ -27,6 +27,9 @@ class VoiceManager: NSObject, ObservableObject {
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
     private let synthesizer = AVSpeechSynthesizer()
+
+    // Both backends are held so switching is instant (no re-init overhead).
+    private let appleService = AppleIntelligenceService()
     private let claudeService = ClaudeService()
 
     // Route + HOS managers (lazy initialized to avoid circular deps)
@@ -36,7 +39,16 @@ class VoiceManager: NSObject, ObservableObject {
     override init() {
         super.init()
         synthesizer.delegate = self
+        appleService.toolHandler = self
         claudeService.toolHandler = self
+    }
+
+    /// The currently active AI backend, based on AppState preference.
+    private var activeService: any CoDriverAIService {
+        switch appState?.activeBackend ?? .claude {
+        case .appleIntelligence: return appleService
+        case .claude: return claudeService
+        }
     }
 
     // MARK: - Permissions
@@ -152,7 +164,7 @@ class VoiceManager: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Claude AI processing
+    // MARK: - AI processing
 
     private func processWithClaude(_ text: String) {
         guard !text.isEmpty else {
@@ -160,30 +172,32 @@ class VoiceManager: NSObject, ObservableObject {
             return
         }
 
-        guard let apiKey = appState?.apiKey else {
-            speak("Please add your Claude API key in Settings to enable AI interaction.")
-            return
-        }
-
         guard let driver = driverState else { return }
+
+        // For Claude backend, validate and inject the API key before calling.
+        if appState?.activeBackend == .claude {
+            guard let apiKey = appState?.apiKey, !apiKey.isEmpty else {
+                speak("Please add your Claude API key in Settings to enable AI interaction.")
+                return
+            }
+            claudeService.apiKey = apiKey
+        }
 
         DispatchQueue.main.async {
             driver.addUserMessage(text)
             driver.isProcessingAI = true
         }
 
-        var partialText = ""
+        let service = activeService
         var sentenceBuffer = ""
 
         Task {
             do {
-                let fullResponse = try await claudeService.sendMessage(
-                    userText: text,
+                let fullResponse = try await service.sendMessage(
+                    text,
                     history: Array(driver.conversationHistory.dropLast()),
-                    apiKey: apiKey,
                     onPartialResponse: { [weak self] chunk in
                         guard let self else { return }
-                        partialText += chunk
                         sentenceBuffer += chunk
                         if let sentenceEnd = self.findSentenceEnd(in: sentenceBuffer) {
                             let sentence = String(sentenceBuffer[...sentenceEnd])
@@ -193,22 +207,34 @@ class VoiceManager: NSObject, ObservableObject {
                     }
                 )
 
-                if !sentenceBuffer.isEmpty {
-                    self.speak(sentenceBuffer, isChunk: true)
-                }
-
+                let remaining = sentenceBuffer
                 DispatchQueue.main.async {
+                    if !remaining.isEmpty {
+                        self.speak(remaining, isChunk: true)
+                    }
                     driver.addAssistantMessage(fullResponse)
                     driver.isProcessingAI = false
                     self.statusMessage = "Tap the mic to speak"
+                }
+            } catch AIServiceError.appleIntelligenceUnavailable(_) {
+                DispatchQueue.main.async {
+                    driver.isProcessingAI = false
+                    self.statusMessage = "Apple Intelligence unavailable"
+                    self.speak("Apple Intelligence isn't available right now. Add a Claude API key in Settings for full features.")
+                }
+            } catch AIServiceError.noAPIKey {
+                DispatchQueue.main.async {
+                    driver.isProcessingAI = false
+                    self.statusMessage = "No API key"
+                    self.speak("Please add your Claude API key in Settings to use the Claude backend.")
                 }
             } catch {
                 DispatchQueue.main.async {
                     driver.isProcessingAI = false
                     self.statusMessage = "Error: \(error.localizedDescription)"
                     driver.lastAIError = error.localizedDescription
+                    self.speak("Sorry, I had trouble with that. Check your connection or AI settings.")
                 }
-                self.speak("Sorry, I had trouble connecting. Check your API key and internet connection.")
             }
         }
     }

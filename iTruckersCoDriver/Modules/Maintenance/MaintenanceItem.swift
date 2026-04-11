@@ -11,17 +11,17 @@ import SwiftData
 
 @Model
 final class MaintenanceItem {
-    var id: UUID
-    var vehicleID: String
-    var driverID: String
-    var category: String        // "tires", "oil", "brakes", "filters", "lights", "other"
-    var itemDescription: String
+    var id: UUID = UUID()
+    var vehicleID: String = ""
+    var driverID: String = ""
+    var category: String = "other"
+    var itemDescription: String = ""
     var lastServiceDate: Date?
-    var lastServiceMiles: Double
-    var intervalMiles: Double   // 0 = not mileage-based
-    var intervalDays: Int       // 0 = not calendar-based
-    var currentOdometer: Double
-    var isActive: Bool
+    var lastServiceMiles: Double = 0
+    var intervalMiles: Double = 0
+    var intervalDays: Int = 0
+    var currentOdometer: Double = 0
+    var isActive: Bool = true
 
     init(
         vehicleID: String,

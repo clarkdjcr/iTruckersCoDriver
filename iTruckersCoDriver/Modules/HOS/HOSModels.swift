@@ -12,11 +12,11 @@ import SwiftData
 
 @Model
 final class HOSEntry {
-    var id: UUID
-    var timestamp: Date
-    var dutyStatusRaw: String
-    var locationName: String
-    var notes: String
+    var id: UUID = UUID()
+    var timestamp: Date = Date()
+    var dutyStatusRaw: String = DutyStatus.offDuty.rawValue
+    var locationName: String = ""
+    var notes: String = ""
 
     init(status: DutyStatus, locationName: String = "", notes: String = "") {
         self.id = UUID()
@@ -35,11 +35,11 @@ final class HOSEntry {
 
 @Model
 final class ExpenseEntry {
-    var id: UUID
-    var date: Date
-    var category: String
-    var amount: Double
-    var note: String
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var category: String = ""
+    var amount: Double = 0
+    var note: String = ""
 
     init(category: String, amount: Double, note: String = "") {
         self.id = UUID()

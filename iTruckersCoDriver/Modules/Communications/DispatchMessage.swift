@@ -12,15 +12,15 @@ import SwiftData
 
 @Model
 final class DispatchMessage {
-    var id: UUID
-    var timestamp: Date
-    var sender: String      // "driver" or "dispatch"
-    var content: String
-    var isRead: Bool
-    var deliveryAddress: String
-    var loadNumber: String
-    var attachmentURL: String
-    var driverID: String    // identifies which driver this thread belongs to
+    var id: UUID = UUID()
+    var timestamp: Date = Date()
+    var sender: String = ""
+    var content: String = ""
+    var isRead: Bool = false
+    var deliveryAddress: String = ""
+    var loadNumber: String = ""
+    var attachmentURL: String = ""
+    var driverID: String = ""
 
     init(
         sender: String,

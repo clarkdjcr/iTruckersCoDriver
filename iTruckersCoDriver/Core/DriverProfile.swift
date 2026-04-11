@@ -13,21 +13,21 @@ import SwiftData
 
 @Model
 final class DriverProfile {
-    var driverID: String
-    var name: String
-    var dutyStatusRaw: String
-    var locationName: String
-    var driveTimeRemaining: TimeInterval
-    var onDutyTimeRemaining: TimeInterval
-    var cycleHoursRemaining: TimeInterval
-    var currentLoadNumber: String
-    var lastUpdated: Date
+    var driverID: String = ""
+    var name: String = ""
+    var dutyStatusRaw: String = "off_duty"
+    var locationName: String = ""
+    var driveTimeRemaining: TimeInterval = 11 * 3600
+    var onDutyTimeRemaining: TimeInterval = 14 * 3600
+    var cycleHoursRemaining: TimeInterval = 70 * 3600
+    var currentLoadNumber: String = ""
+    var lastUpdated: Date = Date()
 
     // Telematics — updated by driver device, read by dispatcher dashboard
-    var speedMPH: Double
-    var fuelLevel: Double       // percentage 0–100
-    var estimatedRange: Double  // miles
-    var hasFatigueAlert: Bool   // set if health monitoring opt-in and score ≥ 70
+    var speedMPH: Double = 0
+    var fuelLevel: Double = 0
+    var estimatedRange: Double = 0
+    var hasFatigueAlert: Bool = false
 
     init(driverID: String, name: String) {
         self.driverID = driverID

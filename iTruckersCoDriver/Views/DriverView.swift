@@ -43,7 +43,7 @@ struct DriverView: View {
                 .tag(3)
 
             ComplianceView()
-                .tabItem { Label("Compliance", systemImage: "doc.badge.checkmark") }
+                .tabItem { Label("Compliance", systemImage: "checkmark.seal.fill") }
                 .tag(4)
 
             MaintenanceView()
