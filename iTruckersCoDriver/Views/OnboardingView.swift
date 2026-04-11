@@ -176,7 +176,7 @@ struct OnboardingView: View {
                             icon: "key.fill",
                             iconColor: .orange,
                             title: "What is an API key?",
-                            body: "It's a unique passcode that gives YOU private access to Anthropic's AI. Think of it like your own CB frequency — nobody else can use yours, and it doesn't identify you personally. It's just a random string of characters."
+                            message: "It's a unique passcode that gives YOU private access to Anthropic's AI. Think of it like your own CB frequency — nobody else can use yours, and it doesn't identify you personally. It's just a random string of characters."
                         )
 
                         // Privacy facts — this is the trust-builder
@@ -203,7 +203,7 @@ struct OnboardingView: View {
                             icon: "dollarsign.circle",
                             iconColor: .blue,
                             title: "What does it cost?",
-                            body: "Anthropic charges by usage — for a typical day of voice commands it runs a few cents. You set your own spending cap in the Anthropic console so there are no surprises."
+                            message: "Anthropic charges by usage — for a typical day of voice commands it runs a few cents. You set your own spending cap in the Anthropic console so there are no surprises."
                         )
 
                         // How to get one
@@ -211,7 +211,7 @@ struct OnboardingView: View {
                             icon: "globe",
                             iconColor: .purple,
                             title: "How do I get one?",
-                            body: "Visit console.anthropic.com — takes about 2 minutes, just an email address. No subscription, no credit check."
+                            message: "Visit console.anthropic.com — takes about 2 minutes, just an email address. No subscription, no credit check."
                         )
 
                         claudeKeyEntrySection
@@ -319,7 +319,7 @@ private struct InfoCallout: View {
     let icon: String
     let iconColor: Color
     let title: String
-    let body: String
+    let message: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -330,7 +330,7 @@ private struct InfoCallout: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline).fontWeight(.semibold)
-                Text(body)
+                Text(message)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
