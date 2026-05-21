@@ -23,6 +23,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                appModeSection
                 aiConfigSection
                 driverProfileSection
                 hosSection
@@ -42,6 +43,29 @@ struct SettingsView: View {
                 Button("OK") {}
             }
             .onAppear { loadCurrentSettings() }
+        }
+    }
+
+    @ViewBuilder
+    private var appModeSection: some View {
+        Section {
+            Picker("App Mode", selection: $appState.role) {
+                ForEach(AppRole.allCases, id: \.self) { role in
+                    Text(role.displayName).tag(role)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.vertical, 4)
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: appState.role == .driver ? "truck.box.fill" : "desktopcomputer")
+                    .foregroundColor(.blue)
+                Text(appState.role == .driver
+                    ? "Driver mode: voice assistant, HOS, route, and compliance tools."
+                    : "Dispatcher mode: fleet overview, messages, loads, and maintenance.")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+        } header: {
+            Text("App Mode")
         }
     }
 

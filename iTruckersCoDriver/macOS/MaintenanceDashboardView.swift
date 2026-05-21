@@ -9,7 +9,6 @@
 import SwiftUI
 import SwiftData
 
-#if os(macOS)
 struct MaintenanceDashboardView: View {
     @Query(sort: \MaintenanceReport.timestamp, order: .reverse) private var allReports: [MaintenanceReport]
     @Query private var allItems: [MaintenanceItem]
@@ -29,65 +28,66 @@ struct MaintenanceDashboardView: View {
     }
 
     var body: some View {
+        #if os(macOS)
         HSplitView {
-            // Driver filter
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Filter by Driver")
-                    .font(.headline).padding()
-                Divider()
-                List(selection: $selectedDriverID) {
-                    Text("All Drivers").tag(nil as String?)
-                    ForEach(drivers) { d in
-                        Text(d.name).tag(d.driverID as String?)
-                    }
+            driverFilterColumn
+            maintenanceContent
+        }
+        #else
+        maintenanceContent
+        #endif
+    }
+
+    private var driverFilterColumn: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Filter by Driver").font(.headline).padding()
+            Divider()
+            List(selection: $selectedDriverID) {
+                Text("All Drivers").tag(nil as String?)
+                ForEach(drivers) { d in
+                    Text(d.name).tag(d.driverID as String?)
                 }
             }
-            .frame(minWidth: 140, maxWidth: 180)
+        }
+        .frame(minWidth: 140, maxWidth: 180)
+    }
 
-            // Main content
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("Fleet Maintenance")
-                        .font(.largeTitle).fontWeight(.bold)
-                    Spacer()
-                    let urgentCount = filteredReports.filter(\.isUrgent).count
-                    if urgentCount > 0 {
-                        Label("\(urgentCount) urgent", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption).foregroundColor(.red)
+    private var maintenanceContent: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Fleet Maintenance").font(.largeTitle).fontWeight(.bold)
+                Spacer()
+                let urgentCount = filteredReports.filter(\.isUrgent).count
+                if urgentCount > 0 {
+                    Label("\(urgentCount) urgent", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundColor(.red)
+                }
+            }
+            .padding()
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    let urgent = filteredReports.filter(\.isUrgent)
+                    if !urgent.isEmpty {
+                        sectionBlock(title: "Urgent Issues", icon: "exclamationmark.triangle.fill", color: .red) {
+                            ForEach(urgent) { reportRow($0) }
+                        }
+                    }
+                    let overdue = filteredItems.filter(\.isOverdue)
+                    if !overdue.isEmpty {
+                        sectionBlock(title: "Overdue Maintenance", icon: "clock.badge.exclamationmark", color: .orange) {
+                            ForEach(overdue) { itemRow($0) }
+                        }
+                    }
+                    sectionBlock(title: "All Reports", icon: "doc.text", color: .primary) {
+                        if filteredReports.isEmpty {
+                            Text("No reports filed.").foregroundColor(.secondary)
+                        } else {
+                            ForEach(filteredReports) { reportRow($0) }
+                        }
                     }
                 }
                 .padding()
-                Divider()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Urgent reports
-                        let urgent = filteredReports.filter(\.isUrgent)
-                        if !urgent.isEmpty {
-                            sectionBlock(title: "Urgent Issues", icon: "exclamationmark.triangle.fill", color: .red) {
-                                ForEach(urgent) { reportRow($0) }
-                            }
-                        }
-
-                        // Overdue maintenance items
-                        let overdue = filteredItems.filter(\.isOverdue)
-                        if !overdue.isEmpty {
-                            sectionBlock(title: "Overdue Maintenance", icon: "clock.badge.exclamationmark", color: .orange) {
-                                ForEach(overdue) { itemRow($0) }
-                            }
-                        }
-
-                        // All reports
-                        sectionBlock(title: "All Reports", icon: "doc.text", color: .primary) {
-                            if filteredReports.isEmpty {
-                                Text("No reports filed.").foregroundColor(.secondary)
-                            } else {
-                                ForEach(filteredReports) { reportRow($0) }
-                            }
-                        }
-                    }
-                    .padding()
-                }
             }
         }
     }
@@ -124,7 +124,11 @@ struct MaintenanceDashboardView: View {
             }
         }
         .padding(8)
+        #if os(macOS)
         .background(Color(NSColor.windowBackgroundColor))
+        #else
+        .background(Color(UIColor.secondarySystemBackground))
+        #endif
         .cornerRadius(8)
     }
 
@@ -142,8 +146,11 @@ struct MaintenanceDashboardView: View {
             Text("OVERDUE").font(.caption).fontWeight(.bold).foregroundColor(.red)
         }
         .padding(8)
+        #if os(macOS)
         .background(Color(NSColor.windowBackgroundColor))
+        #else
+        .background(Color(UIColor.secondarySystemBackground))
+        #endif
         .cornerRadius(8)
     }
 }
-#endif

@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 
-#if os(macOS)
 struct DispatcherDashboardView: View {
     @EnvironmentObject var dispatcherState: DispatcherState
     @Environment(\.modelContext) private var modelContext
@@ -50,7 +49,9 @@ struct DispatcherDashboardView: View {
             detailView
         }
         .navigationTitle("iTrucker Dispatcher")
+        #if os(macOS)
         .frame(minWidth: 960, minHeight: 620)
+        #endif
     }
 
     // MARK: - Sidebar
@@ -177,7 +178,11 @@ struct DispatcherDashboardView: View {
                 .font(.caption2).foregroundColor(.secondary)
         }
         .padding()
+        #if os(macOS)
         .background(Color(NSColor.windowBackgroundColor))
+        #else
+        .background(Color(UIColor.secondarySystemBackground))
+        #endif
         .cornerRadius(12).shadow(radius: 2)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -193,81 +198,94 @@ struct DispatcherDashboardView: View {
     }
 
     private var messagesView: some View {
+        #if os(macOS)
         HSplitView {
-            // Driver list
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Drivers").font(.headline).padding()
-                Divider()
-                List(driverProfiles, selection: $selectedDriverProfile) { profile in
-                    HStack {
-                        Circle().fill(statusColor(profile.dutyStatus)).frame(width: 8, height: 8)
-                        Text(profile.name)
-                        Spacer()
-                        let unread = allMessages.filter {
-                            $0.driverID == profile.driverID && $0.isFromDriver && !$0.isRead
-                        }.count
-                        if unread > 0 {
-                            Text("\(unread)").font(.caption2)
-                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(Color.blue).foregroundColor(.white)
-                                .clipShape(Capsule())
+            driverListColumn
+            messageThreadColumn
+        }
+        #else
+        HStack(spacing: 0) {
+            driverListColumn.frame(width: 220)
+            Divider()
+            messageThreadColumn
+        }
+        #endif
+    }
+
+    private var driverListColumn: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Drivers").font(.headline).padding()
+            Divider()
+            List(driverProfiles, selection: $selectedDriverProfile) { profile in
+                HStack {
+                    Circle().fill(statusColor(profile.dutyStatus)).frame(width: 8, height: 8)
+                    Text(profile.name)
+                    Spacer()
+                    let unread = allMessages.filter {
+                        $0.driverID == profile.driverID && $0.isFromDriver && !$0.isRead
+                    }.count
+                    if unread > 0 {
+                        Text("\(unread)").font(.caption2)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Color.blue).foregroundColor(.white)
+                            .clipShape(Capsule())
+                    }
+                }
+                .tag(profile as DriverProfile?)
+            }
+            if driverProfiles.isEmpty {
+                Text("No drivers yet").font(.caption).foregroundColor(.secondary).padding()
+            }
+        }
+        .frame(minWidth: 160, maxWidth: 220)
+    }
+
+    private var messageThreadColumn: some View {
+        VStack(spacing: 0) {
+            HStack {
+                if let driver = selectedDriverProfile {
+                    Text(driver.name).font(.headline)
+                } else {
+                    Text("Select a driver").font(.headline).foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding()
+            Divider()
+            if selectedDriverProfile == nil {
+                ContentUnavailableView("No Driver Selected", systemImage: "message",
+                    description: Text("Select a driver to view their messages."))
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(threadMessages) { message in
+                                macMessageBubble(message).id(message.id)
+                                    .onAppear {
+                                        if message.isFromDriver && !message.isRead {
+                                            message.isRead = true
+                                            try? modelContext.save()
+                                        }
+                                    }
+                            }
+                        }
+                        .padding()
+                    }
+                    .onChange(of: threadMessages.count) {
+                        if let last = threadMessages.last {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                         }
                     }
-                    .tag(profile as DriverProfile?)
                 }
-                if driverProfiles.isEmpty {
-                    Text("No drivers yet").font(.caption).foregroundColor(.secondary).padding()
-                }
-            }
-            .frame(minWidth: 160, maxWidth: 220)
-
-            // Message thread
-            VStack(spacing: 0) {
+                Divider()
                 HStack {
-                    if let driver = selectedDriverProfile {
-                        Text(driver.name).font(.headline)
-                    } else {
-                        Text("Select a driver").font(.headline).foregroundColor(.secondary)
-                    }
-                    Spacer()
+                    TextField("Message driver...", text: $newMessageText)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { sendDispatchMessage() }
+                    Button("Send", action: sendDispatchMessage)
+                        .disabled(newMessageText.isEmpty || selectedDriverProfile == nil)
                 }
                 .padding()
-                Divider()
-                if selectedDriverProfile == nil {
-                    ContentUnavailableView("No Driver Selected", systemImage: "message",
-                        description: Text("Select a driver to view their messages."))
-                } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(spacing: 8) {
-                                ForEach(threadMessages) { message in
-                                    macMessageBubble(message).id(message.id)
-                                        .onAppear {
-                                            if message.isFromDriver && !message.isRead {
-                                                message.isRead = true
-                                                try? modelContext.save()
-                                            }
-                                        }
-                                }
-                            }
-                            .padding()
-                        }
-                        .onChange(of: threadMessages.count) {
-                            if let last = threadMessages.last {
-                                withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                            }
-                        }
-                    }
-                    Divider()
-                    HStack {
-                        TextField("Message driver...", text: $newMessageText)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit { sendDispatchMessage() }
-                        Button("Send", action: sendDispatchMessage)
-                            .disabled(newMessageText.isEmpty || selectedDriverProfile == nil)
-                    }
-                    .padding()
-                }
             }
         }
     }
@@ -462,4 +480,3 @@ struct DispatcherDashboardView: View {
     }
 
 }
-#endif

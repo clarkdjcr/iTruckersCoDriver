@@ -43,6 +43,9 @@ class AppState: ObservableObject {
     @Published var activeBackend: AIBackend {
         didSet { UserDefaults.standard.set(activeBackend.rawValue, forKey: "aiBackend") }
     }
+    @Published var role: AppRole {
+        didSet { UserDefaults.standard.set(role.rawValue, forKey: "appRole") }
+    }
     /// Driver's fixed operating cost per mile (insurance, truck payment, etc.). Default 0.45.
     @Published var fixedCostPerMile: Double {
         didSet { UserDefaults.standard.set(fixedCostPerMile, forKey: "fixedCostPerMile") }
@@ -64,6 +67,8 @@ class AppState: ObservableObject {
         let savedCPM = UserDefaults.standard.double(forKey: "fixedCostPerMile")
         self.fixedCostPerMile = savedCPM > 0 ? savedCPM : 0.45
         self.truckMPG = UserDefaults.standard.double(forKey: "truckMPG")
+        let roleRaw = UserDefaults.standard.string(forKey: "appRole") ?? "driver"
+        self.role = AppRole(rawValue: roleRaw) ?? .driver
 
         if let existing = UserDefaults.standard.string(forKey: "driverID") {
             self.driverID = existing
@@ -95,6 +100,20 @@ class AppState: ObservableObject {
     var isAppleIntelligenceAvailable: Bool {
         if case .available = SystemLanguageModel.default.availability { return true }
         return false
+    }
+}
+
+// MARK: - App Role
+
+enum AppRole: String, CaseIterable {
+    case driver = "driver"
+    case dispatcher = "dispatcher"
+
+    var displayName: String {
+        switch self {
+        case .driver:     return "Driver"
+        case .dispatcher: return "Dispatcher"
+        }
     }
 }
 

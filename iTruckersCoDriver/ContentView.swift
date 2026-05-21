@@ -6,15 +6,27 @@
 //
 
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        #if os(iOS)
-        DriverView()
-        #else
+        #if os(macOS)
         DispatcherDashboardView()
+        #else
+        switch appState.role {
+        case .driver:
+            DriverView()
+        case .dispatcher:
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                DispatcherDashboardView()
+            } else {
+                DispatcherSummaryView()
+            }
+        }
         #endif
     }
 }
