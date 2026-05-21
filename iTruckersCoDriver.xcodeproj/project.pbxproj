@@ -188,6 +188,23 @@
 				TargetAttributes = {
 					924504532F5CF14C00004415 = {
 						CreatedOnToolsVersion = 26.3;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+							com.apple.WeatherKit = {
+								enabled = 1;
+							};
+						};
 					};
 					924504622F5CF14E00004415 = {
 						CreatedOnToolsVersion = 26.3;
