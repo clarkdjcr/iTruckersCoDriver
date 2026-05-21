@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Privacy Policy for iTrucker's Co-Driver — AI voice assistant for truck drivers." />
+  <title>Privacy Policy — iTrucker's Co-Driver</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:     #1a56db;
+      --blue-lt:  #eff6ff;
+      --green:    #16a34a;
+      --green-lt: #f0fdf4;
+      --red:      #dc2626;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --radius:   8px;
+      --max-w:    760px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--gray-800);
+      background: #fff;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--gray-900);
+      color: #fff;
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .header-icon { font-size: 52px; display: block; margin-bottom: 12px; }
+    header h1 { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; letter-spacing: -0.02em; }
+    header p  { margin-top: 8px; color: #9ca3af; font-size: 0.9rem; }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    nav a {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    nav a:hover { text-decoration: underline; }
+
+    /* ── Main layout ── */
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── TL;DR banner ── */
+    .tldr {
+      background: var(--green-lt);
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .tldr h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tldr p { font-size: 0.92rem; color: var(--gray-800); }
+
+    /* ── Sections ── */
+    section { margin-bottom: 48px; }
+    section h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--gray-200);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-num {
+      background: var(--blue);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 50%;
+      width: 24px; height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin: 24px 0 8px;
+    }
+
+    p { margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead { background: var(--gray-100); }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: var(--gray-600);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--gray-50); }
+
+    /* ── No-collect list ── */
+    .no-list { list-style: none; padding: 0; margin: 12px 0; }
+    .no-list li {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .no-list li:nth-child(odd) { background: var(--gray-50); }
+    .no-icon { font-size: 1rem; flex-shrink: 0; }
+
+    /* ── AI callout boxes ── */
+    .callout {
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin: 16px 0;
+      font-size: 0.92rem;
+    }
+    .callout-blue  { background: var(--blue-lt);  border-left: 4px solid var(--blue); }
+    .callout-green { background: var(--green-lt); border-left: 4px solid var(--green); }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ── Links ── */
+    a { color: var(--blue); }
+    a:hover { text-decoration: none; }
+
+    /* ── Contact card ── */
+    .contact-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-size: 0.92rem;
+    }
+    .contact-card p { margin-bottom: 6px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      border-top: 1px solid var(--gray-200);
+    }
+    footer a { color: var(--gray-400); }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      header { padding: 36px 16px 28px; }
+      main   { padding: 28px 16px 60px; }
+      nav ul { gap: 4px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <span class="header-icon">🚛</span>
+  <h1>iTrucker's Co-Driver</h1>
+  <p>Privacy Policy &nbsp;·&nbsp; Effective May 20, 2026 &nbsp;·&nbsp; Last updated May 20, 2026</p>
+</header>
+
+<!-- ── Sticky nav ── -->
+<nav aria-label="Jump to section">
+  <ul>
+    <li><a href="#tldr">TL;DR</a></li>
+    <li><a href="#who">Who We Are</a></li>
+    <li><a href="#data">Data We Use</a></li>
+    <li><a href="#voice">Voice & AI</a></li>
+    <li><a href="#location">Location</a></li>
+    <li><a href="#health">HealthKit</a></li>
+    <li><a href="#icloud">iCloud</a></li>
+    <li><a href="#apikey">API Key</a></li>
+    <li><a href="#notcollect">Not Collected</a></li>
+    <li><a href="#thirdparty">Third Parties</a></li>
+    <li><a href="#rights">Your Rights</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- ── TL;DR ── -->
+  <div class="tldr" id="tldr">
+    <h2>🛡️ The Short Version</h2>
+    <p>We built iTrucker's Co-Driver for truck drivers, not advertisers. We don't sell your data. We don't run analytics on your conversations. We don't have a server that stores your voice, your location, or your health information. Most of your data lives on your device and, optionally, in your own iCloud account.</p>
+  </div>
+
+  <!-- ── 1. Who We Are ── -->
+  <section id="who">
+    <h2><span class="section-num">1</span> Who We Are</h2>
+    <p>iTrucker's Co-Driver is developed by <strong>Donald Clark</strong>, an independent developer. You can reach us at:</p>
+    <div class="contact-card">
+      <p>📧 <strong>Email:</strong> <a href="mailto:clarkdjcr@gmail.com">clarkdjcr@gmail.com</a></p>
+      <p>🐙 <strong>GitHub:</strong> <a href="https://github.com/clarkdjcr/iTruckersCoDriver" target="_blank" rel="noopener">github.com/clarkdjcr/iTruckersCoDriver</a></p>
+    </div>
+  </section>
+
+  <!-- ── 2. Data We Use ── -->
+  <section id="data">
+    <h2><span class="section-num">2</span> What Data the App Uses</h2>
+
+    <h3>Information You Provide Directly</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>What</th><th>Why</th><th>Where It Lives</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Your name</td><td>Personalizes Co-Driver's voice and dispatcher display</td><td>On your device (UserDefaults)</td></tr>
+          <tr><td>CDL state</td><td>HOS compliance context for Co-Driver</td><td>On your device (UserDefaults)</td></tr>
+          <tr><td>Company / fleet name</td><td>Shown in dispatcher dashboard</td><td>On your device (UserDefaults)</td></tr>
+          <tr><td>Claude API key</td><td>Authenticates requests to Anthropic's AI</td><td>iOS Keychain on your device only</td></tr>
+          <tr><td>HOS log entries</td><td>Duty status tracking for compliance</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Trip records</td><td>Mileage, revenue, fuel for IFTA and compliance</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Expense entries</td><td>Business expense logging for tax records</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Dispatch messages</td><td>Driver ↔ dispatcher communications</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Fuel fill-up records</td><td>MPG calculation and IFTA fuel tax reporting</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Maintenance reports</td><td>Driver-reported vehicle issues</td><td>Device (SwiftData) + your iCloud</td></tr>
+          <tr><td>Fuel receipt photos</td><td>OCR text extraction to auto-fill fuel log</td><td>Processed on device; photo not stored</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Information Collected Automatically</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>What</th><th>Why</th><th>Where It Lives</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GPS location</td><td>Route planning, state-line IFTA tracking, finding nearby services</td><td>On your device only</td></tr>
+          <tr><td>Driving speed</td><td>Driver dashboard and dispatcher fleet view</td><td>Device + your iCloud</td></tr>
+          <tr><td>HealthKit data <em>(opt-in)</em></td><td>Heart rate, HRV, sleep data → fatigue score</td><td>On your device only — never transmitted</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 3. Voice & AI ── -->
+  <section id="voice">
+    <h2><span class="section-num">3</span> Your Voice and AI Conversations</h2>
+
+    <div class="callout callout-green">
+      <strong>🍎 Apple Intelligence (on-device)</strong>
+      Your voice and all AI processing happen entirely on your device. Nothing is sent anywhere. No conversation ever leaves your phone.
+    </div>
+
+    <div class="callout callout-blue">
+      <strong>🤖 Claude by Anthropic (cloud)</strong>
+      Your spoken words are transcribed by Apple's on-device Speech Recognition framework, then sent directly from your device to Anthropic's API using <em>your own API key</em>. We never see, store, or process your conversations. The connection goes: <strong>your phone → Anthropic</strong>. iTrucker is not in that path.
+    </div>
+
+    <p>Anthropic's privacy policy governs how they handle API requests: <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">anthropic.com/privacy</a></p>
+  </section>
+
+  <!-- ── 4. Location ── -->
+  <section id="location">
+    <h2><span class="section-num">4</span> Location Data</h2>
+    <p>The app uses your location for:</p>
+    <ul style="margin: 8px 0 16px 20px;">
+      <li>Finding nearby fuel stations, rest areas, and truck stops</li>
+      <li>Detecting state-line crossings for automatic IFTA mileage logging</li>
+      <li>Displaying your current position on the route map</li>
+    </ul>
+    <p>Location is processed on your device. We do not transmit your GPS coordinates to our servers — we don't have any. If iCloud sync is enabled, your trip mileage records (which include state codes but not precise GPS coordinates) sync through your own iCloud account.</p>
+    <p>The app requests <strong>While Using the App</strong> location permission only. It does not track your location in the background.</p>
+  </section>
+
+  <!-- ── 5. HealthKit ── -->
+  <section id="health">
+    <h2><span class="section-num">5</span> HealthKit</h2>
+    <p>HealthKit integration is <strong>entirely opt-in</strong>. If you enable it:</p>
+    <ul style="margin: 8px 0 16px 20px;">
+      <li>We read heart rate, heart rate variability (HRV), and sleep data to calculate a fatigue score</li>
+      <li>That fatigue score is displayed to you in the Health tab</li>
+      <li>If you have a dispatcher, they see only a binary <strong>Fatigue Alert: Yes / No</strong> — never your raw health numbers</li>
+      <li><strong>Your raw HealthKit data never leaves your device under any circumstances</strong></li>
+    </ul>
+    <p>You can revoke HealthKit access at any time in <strong>iOS Settings → Privacy & Security → Health</strong>.</p>
+  </section>
+
+  <!-- ── 6. iCloud ── -->
+  <section id="icloud">
+    <h2><span class="section-num">6</span> iCloud and CloudKit Sync</h2>
+    <p>If you have iCloud enabled on your device, certain records sync between your devices and with your dispatcher through Apple's CloudKit:</p>
+    <ul style="margin: 8px 0 16px 20px;">
+      <li>Dispatch messages</li>
+      <li>Driver profile (name, duty status, speed, fuel level — <strong>no health data</strong>)</li>
+      <li>Trip records and IFTA mileage</li>
+      <li>Maintenance reports</li>
+    </ul>
+    <p>This sync uses <strong>your own iCloud account</strong> and is subject to <a href="https://www.apple.com/privacy" target="_blank" rel="noopener">Apple's iCloud privacy policy</a>. We do not have access to your iCloud data.</p>
+    <p>If iCloud is not configured, all data remains local to your device only.</p>
+  </section>
+
+  <!-- ── 7. API Key ── -->
+  <section id="apikey">
+    <h2><span class="section-num">7</span> Your Claude API Key</h2>
+    <p>Your Anthropic API key is stored in the <strong>iOS Keychain</strong> — the same secure, encrypted storage used for passwords and financial credentials on iOS. It is never:</p>
+    <ul style="margin: 8px 0 16px 20px;">
+      <li>Sent to our servers</li>
+      <li>Included in crash reports or analytics</li>
+      <li>Accessible to other apps on your device</li>
+    </ul>
+    <p>You can remove your API key at any time from <strong>Settings → AI Configuration → Remove</strong>.</p>
+  </section>
+
+  <!-- ── 8. Not Collected ── -->
+  <section id="notcollect">
+    <h2><span class="section-num">8</span> Data We Do Not Collect</h2>
+    <ul class="no-list">
+      <li><span class="no-icon">❌</span> We do not run advertising networks or sell ads</li>
+      <li><span class="no-icon">❌</span> We do not use third-party analytics (no Firebase, Mixpanel, Amplitude, etc.)</li>
+      <li><span class="no-icon">❌</span> We do not sell your data to anyone, ever</li>
+      <li><span class="no-icon">❌</span> We do not collect crash reports that include personal data</li>
+      <li><span class="no-icon">❌</span> We do not have user accounts on our servers</li>
+      <li><span class="no-icon">❌</span> We do not have servers that store your data at all</li>
+    </ul>
+  </section>
+
+  <!-- ── 9. Children ── -->
+  <section id="children">
+    <h2><span class="section-num">9</span> Children's Privacy</h2>
+    <p>This app is designed for commercial truck drivers and fleet dispatchers. It is not directed at children under 13, and we do not knowingly collect data from children under 13. If you believe a child has provided us with personal information, contact us and we will delete it promptly.</p>
+  </section>
+
+  <!-- ── 10. Your Rights ── -->
+  <section id="rights">
+    <h2><span class="section-num">10</span> Your Rights and Choices</h2>
+
+    <h3>Delete your data</h3>
+    <p>Because your data lives on your device and in your own iCloud account, you control it entirely. Delete the app to remove all local data. Delete iCloud records in <strong>Settings → [Your Name] → iCloud → Manage Account Storage</strong>.</p>
+
+    <h3>Revoke permissions</h3>
+    <p>You can revoke location, microphone, speech recognition, and HealthKit access at any time in <strong>iOS Settings → Privacy & Security</strong>.</p>
+
+    <h3>California residents (CCPA)</h3>
+    <p>We do not sell personal information. We do not share personal information with third parties for cross-context behavioral advertising. California residents have the right to know what personal information is collected and to request deletion — contact us at the address below.</p>
+
+    <h3>EEA / UK residents (GDPR)</h3>
+    <p>You have the right to access, rectify, erase, and port your personal data. Since your data lives on your own device and iCloud account, you exercise these rights directly through iOS. For any questions or requests, contact us at <a href="mailto:clarkdjcr@gmail.com">clarkdjcr@gmail.com</a> and we will respond within 30 days.</p>
+  </section>
+
+  <!-- ── 11. Third Parties ── -->
+  <section id="thirdparty">
+    <h2><span class="section-num">11</span> Third-Party Services</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Service</th><th>Purpose</th><th>Privacy Policy</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Anthropic (Claude API)</td>
+            <td>AI responses when Claude backend is selected</td>
+            <td><a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">anthropic.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td>Apple iCloud / CloudKit</td>
+            <td>Data sync between driver and dispatcher</td>
+            <td><a href="https://www.apple.com/privacy" target="_blank" rel="noopener">apple.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td>Apple HealthKit</td>
+            <td>Fatigue monitoring (opt-in only)</td>
+            <td><a href="https://www.apple.com/privacy" target="_blank" rel="noopener">apple.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td>Apple Maps / MapKit</td>
+            <td>Route display and place search</td>
+            <td><a href="https://www.apple.com/privacy" target="_blank" rel="noopener">apple.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td>Apple WeatherKit</td>
+            <td>Weather conditions along route</td>
+            <td><a href="https://www.apple.com/privacy" target="_blank" rel="noopener">apple.com/privacy</a></td>
+          </tr>
+          <tr>
+            <td>Apple Speech Recognition</td>
+            <td>Transcribing voice input (on-device)</td>
+            <td><a href="https://www.apple.com/privacy" target="_blank" rel="noopener">apple.com/privacy</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 12. Security ── -->
+  <section id="security">
+    <h2><span class="section-num">12</span> Security</h2>
+    <p>We follow Apple's recommended practices for on-device data security:</p>
+    <ul style="margin: 8px 0 16px 20px;">
+      <li>API keys stored in the iOS Keychain (AES-256 encrypted)</li>
+      <li>All network requests use HTTPS / TLS</li>
+      <li>iCloud sync is end-to-end encrypted for sensitive data per Apple's policies</li>
+      <li>No data is stored on third-party servers we control</li>
+    </ul>
+  </section>
+
+  <!-- ── 13. Changes ── -->
+  <section id="changes">
+    <h2><span class="section-num">13</span> Changes to This Policy</h2>
+    <p>If we make material changes to this policy, we will update the <strong>Last Updated</strong> date at the top of the page and note it in the App Store release notes for the next update. Continued use of the app after changes constitutes your acceptance of the updated policy.</p>
+  </section>
+
+  <!-- ── 14. Contact ── -->
+  <section id="contact">
+    <h2><span class="section-num">14</span> Contact</h2>
+    <p>Questions, data requests, or concerns — we read every message and respond personally.</p>
+    <div class="contact-card">
+      <p>👤 <strong>Donald Clark</strong></p>
+      <p>📧 <a href="mailto:clarkdjcr@gmail.com">clarkdjcr@gmail.com</a></p>
+      <p>🐙 <a href="https://github.com/clarkdjcr/iTruckersCoDriver/issues" target="_blank" rel="noopener">GitHub Issues</a></p>
+    </div>
+    <p style="margin-top:16px; font-size:0.88rem; color: var(--gray-600);">
+      This policy was written to be read by actual people, not just lawyers. If anything is unclear, email us — we'll answer.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2026 Donald Clark &nbsp;·&nbsp; iTrucker's Co-Driver &nbsp;·&nbsp; <a href="mailto:clarkdjcr@gmail.com">clarkdjcr@gmail.com</a></p>
+  <p style="margin-top:4px;">Last updated May 20, 2026</p>
+</footer>
+
+</body>
+</html>
