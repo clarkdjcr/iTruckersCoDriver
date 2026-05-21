@@ -82,7 +82,7 @@ struct iTruckersCoDriverApp: App {
     }
 }
 
-// MARK: - Root View (iOS onboarding gate)
+// MARK: - Root View
 
 struct RootView: View {
     @EnvironmentObject var appState: AppState
@@ -92,8 +92,13 @@ struct RootView: View {
     @State private var isOnboardingComplete: Bool = false
 
     private var onboardingDone: Bool {
-        // Onboarding complete if we have a DriverAccount for this device OR have an API key
-        isOnboardingComplete || appState.hasAPIKey || checkExistingAccount()
+        if appState.onboardingComplete || isOnboardingComplete { return true }
+        // Backward compat: existing users with a DriverAccount or API key skip re-onboarding
+        if appState.hasAPIKey || checkExistingAccount() {
+            appState.onboardingComplete = true
+            return true
+        }
+        return false
     }
 
     var body: some View {
@@ -111,9 +116,59 @@ struct RootView: View {
         )
         return ((try? modelContext.fetch(descriptor))?.isEmpty == false)
     }
+
     #else
+
+    // macOS: always dispatcher — show a first-launch setup sheet
+    @State private var showMacOnboarding: Bool = false
+    @State private var macName = ""
+    @State private var macCompany = ""
+
     var body: some View {
         ContentView()
+            .onAppear {
+                if !appState.onboardingComplete { showMacOnboarding = true }
+            }
+            .sheet(isPresented: $showMacOnboarding) {
+                macOnboardingSheet
+            }
+    }
+
+    private var macOnboardingSheet: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Text("🚛").font(.system(size: 56))
+                Text("Welcome to iTrucker Dispatcher")
+                    .font(.title2).fontWeight(.bold)
+                Text("A quick setup before you get started.")
+                    .foregroundColor(.secondary)
+            }
+
+            Form {
+                Section("Your Info") {
+                    TextField("Your name", text: $macName)
+                    TextField("Company / Fleet name (optional)", text: $macCompany)
+                }
+            }
+            .formStyle(.grouped)
+            .frame(height: 140)
+
+            HStack {
+                Spacer()
+                Button("Get Started") {
+                    appState.driverName = macName.isEmpty ? "Dispatcher" : macName
+                    appState.companyName = macCompany
+                    appState.role = .dispatcher
+                    appState.onboardingComplete = true
+                    showMacOnboarding = false
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(macName.isEmpty)
+            }
+        }
+        .padding(32)
+        .frame(width: 420)
+        .interactiveDismissDisabled()
     }
     #endif
 }

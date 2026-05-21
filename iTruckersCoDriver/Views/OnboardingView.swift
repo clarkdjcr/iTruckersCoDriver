@@ -2,7 +2,10 @@
 //  OnboardingView.swift
 //  iTruckersCoDriver
 //
-//  Multi-step driver onboarding: welcome → profile setup → API key entry → complete.
+//  Branched onboarding:
+//    Step 0 — Role selection (driver or dispatcher)
+//    Step 1 — Profile (driver: name/CDL/cycle; dispatcher: name/company)
+//    Step 2 — AI setup (driver only; dispatcher is done after step 1)
 //
 
 import SwiftUI
@@ -10,131 +13,257 @@ import SwiftData
 
 #if os(iOS)
 struct OnboardingView: View {
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var appState: AppState
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var onboardingManager = OnboardingManager()
     @Binding var isOnboardingComplete: Bool
 
     @State private var step = 0
-    @State private var driverName = ""
+    // Shared
+    @State private var userName = ""
+    // Driver
     @State private var cdlState = ""
+    @State private var selectedCycle: HOSCycle = .seventyHour
     @State private var apiKeyInput = ""
     @State private var showAPIKey = false
     @State private var account: DriverAccount?
+    // Dispatcher
+    @State private var companyName = ""
+
+    private var totalSteps: Int { appState.role == .driver ? 3 : 2 }
 
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Progress bar
-                HStack(spacing: 6) {
-                    ForEach(0..<3) { i in
-                        Capsule()
-                            .fill(i <= step ? Color.blue : Color.gray.opacity(0.3))
-                            .frame(height: 4)
+                if step > 0 { progressBar.padding(.top, 16) }
+
+                Group {
+                    switch step {
+                    case 0: roleStep
+                    case 1: profileStep
+                    case 2: aiStep
+                    default: EmptyView()
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 16)
-
-                TabView(selection: $step) {
-                    welcomeStep.tag(0)
-                    profileStep.tag(1)
-                    apiKeyStep.tag(2)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut, value: step)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing),
+                    removal: .move(edge: .leading)
+                ))
+                .animation(.easeInOut(duration: 0.3), value: step)
             }
-            .navigationTitle("Welcome to Co-Driver")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
         }
         .interactiveDismissDisabled()
     }
 
-    // MARK: - Step 0: Welcome
-
-    private var welcomeStep: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Text("🚛")
-                .font(.system(size: 80))
-            Text("iTrucker's Co-Driver")
-                .font(.largeTitle).fontWeight(.bold)
-            Text("Your AI-powered trucking companion.\nVoice-driven. Safety-first. Always on duty.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            Spacer()
-            Button(action: { withAnimation { step = 1 } }) {
-                Text("Get Started")
-                    .frame(maxWidth: .infinity).padding()
-                    .background(Color.blue).foregroundColor(.white)
-                    .cornerRadius(14)
-            }
-            .padding(.horizontal)
+    private var navigationTitle: String {
+        switch step {
+        case 0: return "Welcome"
+        case 1: return appState.role == .driver ? "Driver Profile" : "Dispatcher Profile"
+        case 2: return "AI Setup"
+        default: return "iTrucker Co-Driver"
         }
-        .padding()
     }
 
-    // MARK: - Step 1: Profile
+    // MARK: - Progress bar
+
+    private var progressBar: some View {
+        HStack(spacing: 6) {
+            ForEach(1..<totalSteps, id: \.self) { i in
+                Capsule()
+                    .fill(i < step ? Color.blue : i == step ? Color.blue.opacity(0.5) : Color.gray.opacity(0.25))
+                    .frame(height: 4)
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Step 0: Role selection
+
+    private var roleStep: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 8) {
+                Text("🚛").font(.system(size: 72))
+                Text("iTrucker's Co-Driver")
+                    .font(.largeTitle).fontWeight(.bold)
+                Text("Who's using this device?")
+                    .font(.subheadline).foregroundColor(.secondary)
+            }
+            .padding(.bottom, 40)
+
+            VStack(spacing: 16) {
+                roleCard(
+                    icon: "truck.box.fill",
+                    iconColor: .blue,
+                    title: "I'm a Driver",
+                    subtitle: "Voice assistant · HOS tracking · Route & navigation · Compliance",
+                    role: .driver
+                )
+                roleCard(
+                    icon: "desktopcomputer",
+                    iconColor: .purple,
+                    title: "I'm a Dispatcher",
+                    subtitle: "Fleet overview · Driver messages · Loads · Maintenance dashboard",
+                    role: .dispatcher
+                )
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+        }
+    }
+
+    private func roleCard(icon: String, iconColor: Color, title: String, subtitle: String, role: AppRole) -> some View {
+        Button {
+            appState.role = role
+            withAnimation { step = 1 }
+        } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(iconColor.opacity(0.12))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(iconColor)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline).foregroundColor(.primary)
+                    Text(subtitle)
+                        .font(.caption).foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            .padding(18)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - Step 1: Profile (branched)
 
     private var profileStep: some View {
-        VStack(spacing: 20) {
+        appState.role == .driver ? AnyView(driverProfileStep) : AnyView(dispatcherProfileStep)
+    }
+
+    private var driverProfileStep: some View {
+        VStack(spacing: 24) {
             Spacer()
-            Text("Your Profile")
-                .font(.title).fontWeight(.bold)
-            Text("Helps Co-Driver personalize your experience.")
-                .foregroundColor(.secondary).multilineTextAlignment(.center)
+            VStack(spacing: 6) {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 44)).foregroundColor(.blue)
+                Text("Your Driver Profile")
+                    .font(.title2).fontWeight(.bold)
+                Text("Personalizes HOS, compliance, and Co-Driver's voice.")
+                    .font(.subheadline).foregroundColor(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal)
+            }
+
             VStack(spacing: 12) {
-                TextField("Your name", text: $driverName)
+                TextField("Your name", text: $userName)
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
-                TextField("CDL State (TX)", text: $cdlState)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.characters)
-                    .frame(maxWidth: 120)
+
+                HStack(spacing: 12) {
+                    TextField("CDL State (TX)", text: $cdlState)
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.characters)
+                        .frame(maxWidth: 130)
+
+                    Picker("HOS Cycle", selection: $selectedCycle) {
+                        Text("70 hr / 8 day").tag(HOSCycle.seventyHour)
+                        Text("60 hr / 7 day").tag(HOSCycle.sixtyHour)
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity)
+                    .padding(7)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(8)
+                }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
+
             Spacer()
-            Button(action: { withAnimation { step = 2 } }) {
-                Text("Continue")
-                    .frame(maxWidth: .infinity).padding()
-                    .background(driverName.isEmpty ? Color.gray : Color.blue)
-                    .foregroundColor(.white).cornerRadius(14)
+
+            primaryButton(title: "Continue", disabled: userName.isEmpty) {
+                withAnimation { step = 2 }
             }
-            .disabled(driverName.isEmpty)
-            .padding(.horizontal)
         }
         .padding()
     }
 
-    // MARK: - Step 2: AI Backend selection
+    private var dispatcherProfileStep: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            VStack(spacing: 6) {
+                Image(systemName: "building.2.fill")
+                    .font(.system(size: 44)).foregroundColor(.purple)
+                Text("Dispatcher Profile")
+                    .font(.title2).fontWeight(.bold)
+                Text("Your name and fleet info appear in driver communications.")
+                    .font(.subheadline).foregroundColor(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal)
+            }
 
-    private var apiKeyStep: some View {
+            VStack(spacing: 12) {
+                TextField("Your name", text: $userName)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                TextField("Company / Fleet name (optional)", text: $companyName)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            primaryButton(title: "Finish Setup", disabled: userName.isEmpty) {
+                finishDispatcherOnboarding()
+            }
+        }
+        .padding()
+    }
+
+    // MARK: - Step 2: AI Setup (driver only)
+
+    private var aiStep: some View {
         VStack(spacing: 20) {
             Spacer()
 
             if appState.isAppleIntelligenceAvailable {
-                // Device supports Apple Intelligence — offer the no-key path
-                Text("Choose Your AI")
-                    .font(.title).fontWeight(.bold)
-
-                Text("Your phone has built-in AI that runs the whole show locally — no internet, no accounts, no one listening in. Your conversations never leave this device.")
-                    .foregroundColor(.secondary).multilineTextAlignment(.center).padding(.horizontal)
+                VStack(spacing: 6) {
+                    Image(systemName: "brain.filled.head.profile")
+                        .font(.system(size: 44)).foregroundColor(.blue)
+                    Text("Choose Your AI")
+                        .font(.title2).fontWeight(.bold)
+                    Text("Your phone has built-in AI that runs entirely on-device — no internet, no accounts, nothing leaves your phone.")
+                        .font(.subheadline).foregroundColor(.secondary)
+                        .multilineTextAlignment(.center).padding(.horizontal)
+                }
 
                 VStack(spacing: 12) {
-                    Button(action: useAppleIntelligence) {
+                    Button(action: { useAppleIntelligence() }) {
                         HStack {
                             Image(systemName: "apple.logo")
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Use Apple Intelligence")
                                     .fontWeight(.semibold)
-                                Text("On-device · Private · No API key needed")
-                                    .font(.caption).opacity(0.8)
+                                Text("On-device · Private · No API key")
+                                    .font(.caption).opacity(0.85)
                             }
                             Spacer()
-                            Image(systemName: "checkmark.circle.fill")
-                                .opacity(0.8)
+                            Image(systemName: "checkmark.shield.fill").opacity(0.85)
                         }
                         .padding()
                         .background(Color.blue)
@@ -148,73 +277,45 @@ struct OnboardingView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Use Claude (Anthropic)")
                                     .fontWeight(.semibold)
-                                Text("Requires a Claude API key from console.anthropic.com")
+                                Text("Requires a free API key from console.anthropic.com")
                                     .font(.caption).opacity(0.8)
                             }
                             Spacer()
                         }
                         .padding()
-                        .background(Color.secondary.opacity(0.12))
+                        .background(Color(UIColor.secondarySystemBackground))
                         .foregroundColor(.primary)
                         .cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.2)))
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
 
-                claudeKeyEntrySection
+                if appState.activeBackend == .claude { claudeKeySection }
 
             } else {
-                // Device doesn't support Apple Intelligence — explain the key clearly
+                VStack(spacing: 6) {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 44)).foregroundColor(.orange)
+                    Text("Connect Your AI")
+                        .font(.title2).fontWeight(.bold)
+                }
+
                 ScrollView {
-                    VStack(spacing: 20) {
-                        Text("Your AI Brain Needs a Key")
-                            .font(.title2).fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-
-                        // What is it?
-                        InfoCallout(
-                            icon: "key.fill",
-                            iconColor: .orange,
+                    VStack(spacing: 16) {
+                        InfoCallout(icon: "key.fill", iconColor: .orange,
                             title: "What is an API key?",
-                            message: "It's a unique passcode that gives YOU private access to Anthropic's AI. Think of it like your own CB frequency — nobody else can use yours, and it doesn't identify you personally. It's just a random string of characters."
-                        )
-
-                        // Privacy facts — this is the trust-builder
-                        VStack(alignment: .leading, spacing: 10) {
-                            Label("Straight talk on your privacy", systemImage: "lock.shield.fill")
-                                .font(.subheadline).fontWeight(.semibold)
-                                .foregroundColor(.green)
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                PrivacyRow(icon: "iphone", text: "Your key is stored only on this phone — never on our servers.")
-                                PrivacyRow(icon: "arrow.left.arrow.right", text: "Your voice goes straight from your phone to Anthropic. iTrucker never sees your conversations.")
-                                PrivacyRow(icon: "hand.raised.fill", text: "Anthropic does NOT sell your data or hand it to the government.")
-                                PrivacyRow(icon: "person.slash", text: "No name, no CDL, no personal info is tied to the key.")
-                                PrivacyRow(icon: "trash", text: "Delete the key any time from Settings. No account to cancel.")
-                            }
-                            .padding(14)
-                            .background(Color.green.opacity(0.08))
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal)
-
-                        // Cost note
-                        InfoCallout(
-                            icon: "dollarsign.circle",
-                            iconColor: .blue,
+                            message: "A unique passcode giving YOU private access to Anthropic's AI. Like your own CB frequency — nobody else can use yours, and it doesn't identify you personally.")
+                        InfoCallout(icon: "lock.shield.fill", iconColor: .green,
+                            title: "Your privacy",
+                            message: "Your key lives only on this phone. Your voice goes straight to Anthropic — iTrucker never sees your conversations. Anthropic doesn't sell your data.")
+                        InfoCallout(icon: "dollarsign.circle", iconColor: .blue,
                             title: "What does it cost?",
-                            message: "Anthropic charges by usage — for a typical day of voice commands it runs a few cents. You set your own spending cap in the Anthropic console so there are no surprises."
-                        )
-
-                        // How to get one
-                        InfoCallout(
-                            icon: "globe",
-                            iconColor: .purple,
+                            message: "Anthropic charges by usage — a typical day of voice commands runs a few cents. Set your own spending cap in the console so there are no surprises.")
+                        InfoCallout(icon: "globe", iconColor: .purple,
                             title: "How do I get one?",
-                            message: "Visit console.anthropic.com — takes about 2 minutes, just an email address. No subscription, no credit check."
-                        )
-
-                        claudeKeyEntrySection
+                            message: "Visit console.anthropic.com — takes about 2 minutes, just an email address. No subscription, no credit check.")
+                        claudeKeySection
                     }
                     .padding(.vertical)
                 }
@@ -226,7 +327,7 @@ struct OnboardingView: View {
     }
 
     @ViewBuilder
-    private var claudeKeyEntrySection: some View {
+    private var claudeKeySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 if showAPIKey {
@@ -242,8 +343,9 @@ struct OnboardingView: View {
                 }
             }
             .padding(12)
-            .background(Color.secondary.opacity(0.1))
+            .background(Color(UIColor.secondarySystemBackground))
             .cornerRadius(10)
+
             if case .invalid(let msg) = onboardingManager.keyValidationResult {
                 Text(msg).font(.caption).foregroundColor(.red)
             }
@@ -252,40 +354,49 @@ struct OnboardingView: View {
                     .font(.caption).foregroundColor(.green)
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 24)
 
         if onboardingManager.isValidatingKey {
-            ProgressView("Verifying key...")
+            ProgressView("Verifying…")
         } else if case .valid = onboardingManager.keyValidationResult {
-            Button(action: finishOnboarding) {
-                Text("Start Driving!")
-                    .frame(maxWidth: .infinity).padding()
-                    .background(Color.green).foregroundColor(.white).cornerRadius(14)
+            primaryButton(title: "Start Driving! 🚛", disabled: false) {
+                finishDriverOnboarding()
             }
-            .padding(.horizontal)
         } else {
-            VStack(spacing: 12) {
-                Button(action: validateKey) {
-                    Text("Verify & Continue")
-                        .frame(maxWidth: .infinity).padding()
-                        .background(apiKeyInput.isEmpty ? Color.gray : Color.blue)
-                        .foregroundColor(.white).cornerRadius(14)
+            VStack(spacing: 10) {
+                primaryButton(title: "Verify & Continue",
+                              disabled: apiKeyInput.isEmpty,
+                              color: apiKeyInput.isEmpty ? .gray : .blue) {
+                    validateKey()
                 }
-                .disabled(apiKeyInput.isEmpty)
-                if !appState.isAppleIntelligenceAvailable {
-                    Button("Skip for now") { finishOnboarding() }
-                        .foregroundColor(.secondary).font(.caption)
+                Button("Skip for now — add key in Settings later") {
+                    finishDriverOnboarding()
                 }
+                .font(.caption).foregroundColor(.secondary)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
         }
+    }
+
+    // MARK: - Shared button
+
+    private func primaryButton(title: String, disabled: Bool, color: Color = .blue, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity).padding()
+                .background(disabled ? Color.gray.opacity(0.4) : color)
+                .foregroundColor(.white).cornerRadius(14)
+        }
+        .disabled(disabled)
+        .padding(.horizontal, 24)
     }
 
     // MARK: - Actions
 
     private func useAppleIntelligence() {
         appState.activeBackend = .appleIntelligence
-        finishOnboarding()
+        finishDriverOnboarding()
     }
 
     private func validateKey() {
@@ -293,20 +404,31 @@ struct OnboardingView: View {
         Task { await onboardingManager.validateAndSaveKey(apiKeyInput, for: acc) }
     }
 
-    private func finishOnboarding() {
+    private func finishDriverOnboarding() {
         let acc = getOrCreateAccount()
-        onboardingManager.completeOnboarding(
-            account: acc, name: driverName, cdlState: cdlState
+        onboardingManager.completeDriverOnboarding(
+            account: acc,
+            appState: appState,
+            name: userName,
+            cdlState: cdlState,
+            cycle: selectedCycle
         )
-        appState.driverName = driverName
-        appState.cdlState = cdlState
         try? modelContext.save()
+        isOnboardingComplete = true
+    }
+
+    private func finishDispatcherOnboarding() {
+        onboardingManager.completeDispatcherOnboarding(
+            appState: appState,
+            name: userName,
+            companyName: companyName
+        )
         isOnboardingComplete = true
     }
 
     private func getOrCreateAccount() -> DriverAccount {
         if let existing = account { return existing }
-        let acc = DriverAccount(driverID: appState.driverID, name: driverName)
+        let acc = DriverAccount(driverID: appState.driverID, name: userName)
         modelContext.insert(acc)
         account = acc
         return acc
@@ -324,15 +446,10 @@ private struct InfoCallout: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(iconColor)
-                .frame(width: 24)
-                .padding(.top, 2)
+                .foregroundColor(iconColor).frame(width: 24).padding(.top, 2)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline).fontWeight(.semibold)
-                Text(message)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Text(title).font(.subheadline).fontWeight(.semibold)
+                Text(message).font(.caption).foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -346,16 +463,10 @@ private struct InfoCallout: View {
 private struct PrivacyRow: View {
     let icon: String
     let text: String
-
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon)
-                .foregroundColor(.green)
-                .frame(width: 18)
-                .padding(.top, 1)
-            Text(text)
-                .font(.caption)
-                .fixedSize(horizontal: false, vertical: true)
+            Image(systemName: icon).foregroundColor(.green).frame(width: 18).padding(.top, 1)
+            Text(text).font(.caption).fixedSize(horizontal: false, vertical: true)
         }
     }
 }

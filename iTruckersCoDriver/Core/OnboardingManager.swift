@@ -42,6 +42,25 @@ class OnboardingManager: ObservableObject {
         isValidatingKey = false
     }
 
+    func completeDriverOnboarding(account: DriverAccount, appState: AppState, name: String, cdlState: String, cycle: HOSCycle) {
+        account.name = name.isEmpty ? "Driver" : name
+        account.cdlState = cdlState
+        account.onboardingComplete = true
+        appState.driverName = account.name
+        appState.cdlState = cdlState
+        appState.hosCycle = cycle
+        appState.role = .driver
+        appState.onboardingComplete = true
+    }
+
+    func completeDispatcherOnboarding(appState: AppState, name: String, companyName: String) {
+        appState.driverName = name.isEmpty ? "Dispatcher" : name
+        appState.companyName = companyName
+        appState.role = .dispatcher
+        appState.onboardingComplete = true
+    }
+
+    // Legacy — kept for backward compat with existing call sites
     func completeOnboarding(account: DriverAccount, name: String, cdlState: String) {
         account.name = name.isEmpty ? "Driver" : name
         account.cdlState = cdlState
