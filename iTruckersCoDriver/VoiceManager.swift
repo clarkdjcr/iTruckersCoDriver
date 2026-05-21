@@ -372,30 +372,58 @@ extension VoiceManager: ClaudeToolHandler {
     }
 
     func handleCalculateProfit(loadRevenue: Double, miles: Double) async -> String {
-        // Simple profit calculation using default or current trip metrics
-        let fixedCosts = 0.45 // placeholder
-        let avgFuelPrice = 4.50 // placeholder
-        let fuelEfficiency = 6.5 // mpg placeholder
-        
-        let estimatedFuelGallons = miles / fuelEfficiency
+        let fixedCostPerMile = appState?.fixedCostPerMile ?? 0.45
+
+        // Resolve MPG: manual override → computed from fuel records → default
+        var avgMPG = appState?.truckMPG ?? 0
+        var avgFuelPrice = 4.50
+        var mpgSource = "default estimate"
+
+        if let context = modelContext, let driverID = appState?.driverID {
+            let descriptor = FetchDescriptor<FuelRecord>(
+                predicate: #Predicate { $0.driverID == driverID },
+                sortBy: [SortDescriptor(\.date, order: .reverse)]
+            )
+            let records = (try? context.fetch(descriptor)) ?? []
+
+            if avgMPG == 0, records.count >= 2 {
+                let recent = Array(records.prefix(10))
+                let totalGallons = recent.reduce(0) { $0 + $1.gallons }
+                let odometerSpan = (recent.first?.odometer ?? 0) - (recent.last?.odometer ?? 0)
+                if totalGallons > 0 && odometerSpan > 0 {
+                    avgMPG = odometerSpan / totalGallons
+                    mpgSource = "your fuel records"
+                }
+            } else if avgMPG > 0 {
+                mpgSource = "your settings"
+            }
+
+            if let lastFill = records.first, lastFill.pricePerGallon > 0 {
+                avgFuelPrice = lastFill.pricePerGallon
+            }
+        } else if avgMPG > 0 {
+            mpgSource = "your settings"
+        }
+        if avgMPG == 0 { avgMPG = 6.5 }
+
+        let estimatedFuelGallons = miles / avgMPG
         let fuelCost = estimatedFuelGallons * avgFuelPrice
-        let fixedExpenses = miles * fixedCosts
+        let fixedExpenses = miles * fixedCostPerMile
         let totalExpenses = fuelCost + fixedExpenses
         let profit = loadRevenue - totalExpenses
         let profitPerMile = miles > 0 ? profit / miles : 0
-        
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        let pFormatted = formatter.string(from: NSNumber(value: profit)) ?? "$\(profit)"
-        let ppmFormatted = formatter.string(from: NSNumber(value: profitPerMile)) ?? "$\(profitPerMile)"
-        
+
+        let fmt = NumberFormatter()
+        fmt.numberStyle = .currency
+        let pFormatted = fmt.string(from: NSNumber(value: profit)) ?? "$\(Int(profit))"
+        let ppmFormatted = fmt.string(from: NSNumber(value: profitPerMile)) ?? "$\(String(format: "%.2f", profitPerMile))"
+
         return """
-        Profit Analysis for \(Int(miles)) mile load:
-        - Estimated Fuel: $\(Int(fuelCost))
-        - Fixed Expenses: $\(Int(fixedExpenses))
-        - Total Expenses: $\(Int(totalExpenses))
-        - True Profit: \(pFormatted)
-        - Profit per mile: \(ppmFormatted)
+        Profit analysis for \(Int(miles))-mile load at \(fmt.string(from: NSNumber(value: loadRevenue)) ?? "$\(Int(loadRevenue))") gross:
+        Fuel: \(String(format: "%.0f", estimatedFuelGallons)) gal @ $\(String(format: "%.3f", avgFuelPrice)) = $\(Int(fuelCost)) (\(Int(avgMPG)) MPG from \(mpgSource))
+        Fixed costs: $\(Int(fixedExpenses)) at $\(String(format: "%.2f", fixedCostPerMile))/mile
+        Total expenses: $\(Int(totalExpenses))
+        True profit: \(pFormatted) | \(ppmFormatted)/mile
         """
     }
 

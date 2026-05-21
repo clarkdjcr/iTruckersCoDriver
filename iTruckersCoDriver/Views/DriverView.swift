@@ -70,6 +70,9 @@ struct DriverView: View {
             voiceManager.configure(modelContext: modelContext)
             telemetryManager.driverState = driverState
             telemetryManager.configure(driverID: appState.driverID, context: modelContext)
+            telemetryManager.onStateCrossing = { state in
+                voiceManager.speak("You've entered \(state). Miles logged for IFTA.")
+            }
             syncDriverProfile()
         }
         .onChange(of: driverState.currentDutyStatus) { syncDriverProfile() }

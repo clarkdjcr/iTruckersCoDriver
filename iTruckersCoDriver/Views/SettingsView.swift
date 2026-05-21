@@ -17,6 +17,8 @@ struct SettingsView: View {
     @State private var isELogMode = true
     @State private var showAPIKey = false
     @State private var showSavedAlert = false
+    @State private var fixedCostInput = ""
+    @State private var truckMPGInput = ""
 
     var body: some View {
         NavigationView {
@@ -24,6 +26,7 @@ struct SettingsView: View {
                 aiConfigSection
                 driverProfileSection
                 hosSection
+                costEfficiencySection
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -164,6 +167,38 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
+    private var costEfficiencySection: some View {
+        Section {
+            HStack {
+                Text("Fixed Cost / Mile")
+                Spacer()
+                TextField("0.45", text: $fixedCostInput)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .foregroundColor(.secondary)
+                    .frame(width: 80)
+                Text("$").foregroundColor(.secondary)
+            }
+            HStack {
+                Text("Truck MPG")
+                Spacer()
+                TextField("Auto", text: $truckMPGInput)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .foregroundColor(.secondary)
+                    .frame(width: 80)
+            }
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "info.circle").foregroundColor(.blue)
+                Text("Leave MPG blank to compute automatically from your fuel records. Fixed cost covers insurance, truck payment, and other per-mile overhead.")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+        } header: {
+            Text("Cost & Efficiency")
+        }
+    }
+
+    @ViewBuilder
     private var aboutSection: some View {
         Section("About") {
             HStack {
@@ -188,19 +223,21 @@ struct SettingsView: View {
         driverName = appState.driverName
         cdlState = appState.cdlState
         selectedCycle = appState.hosCycle
+        fixedCostInput = String(format: "%.2f", appState.fixedCostPerMile)
+        truckMPGInput = appState.truckMPG > 0 ? String(format: "%.1f", appState.truckMPG) : ""
     }
 
     private func save() {
-        // Save API key to Keychain
         let trimmed = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             KeychainHelper.save(trimmed, forKey: KeychainHelper.anthropicAPIKey)
         }
 
-        // Save preferences
         appState.driverName = driverName
         appState.cdlState = cdlState
         appState.hosCycle = selectedCycle
+        if let cpm = Double(fixedCostInput), cpm > 0 { appState.fixedCostPerMile = cpm }
+        appState.truckMPG = Double(truckMPGInput) ?? 0
 
         showSavedAlert = true
     }

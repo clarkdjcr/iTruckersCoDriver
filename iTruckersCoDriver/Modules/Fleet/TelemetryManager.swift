@@ -29,6 +29,8 @@ class TelemetryManager: NSObject, ObservableObject {
 
     // Set by DriverView after init
     weak var driverState: DriverState?
+    /// Called on the main queue when the truck crosses a state line. Receives the new state name.
+    var onStateCrossing: ((String) -> Void)?
 
     func configure(driverID: String, context: ModelContext) {
         self.driverID = driverID
@@ -157,14 +159,13 @@ extension TelemetryManager: CLLocationManagerDelegate {
     private func detectStateChange(for location: CLLocation) {
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self = self,
+            guard let self,
                   let state = placemarks?.first?.administrativeArea,
                   state != self.currentState else { return }
-            
-            let oldState = self.currentState ?? "Unknown"
+            let isFirstDetection = self.currentState == nil
             self.currentState = state
-            print("🚚 State Line Crossed: \(oldState) -> \(state)")
-            // Future: Trigger voice notification via VoiceManager
+            guard !isFirstDetection else { return }
+            DispatchQueue.main.async { self.onStateCrossing?(state) }
         }
     }
     

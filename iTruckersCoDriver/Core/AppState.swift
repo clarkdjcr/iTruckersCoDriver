@@ -43,6 +43,14 @@ class AppState: ObservableObject {
     @Published var activeBackend: AIBackend {
         didSet { UserDefaults.standard.set(activeBackend.rawValue, forKey: "aiBackend") }
     }
+    /// Driver's fixed operating cost per mile (insurance, truck payment, etc.). Default 0.45.
+    @Published var fixedCostPerMile: Double {
+        didSet { UserDefaults.standard.set(fixedCostPerMile, forKey: "fixedCostPerMile") }
+    }
+    /// Manual MPG override. 0 means "compute from fuel records automatically".
+    @Published var truckMPG: Double {
+        didSet { UserDefaults.standard.set(truckMPG, forKey: "truckMPG") }
+    }
 
     /// Stable per-device UUID. Created once and persisted — identifies this driver in CloudKit.
     let driverID: String
@@ -53,6 +61,9 @@ class AppState: ObservableObject {
         self.hosCycle = HOSCycle(rawValue: cycleRaw) ?? .seventyHour
         self.cdlState = UserDefaults.standard.string(forKey: "cdlState") ?? ""
         self.healthMonitoringEnabled = UserDefaults.standard.bool(forKey: "healthMonitoringEnabled")
+        let savedCPM = UserDefaults.standard.double(forKey: "fixedCostPerMile")
+        self.fixedCostPerMile = savedCPM > 0 ? savedCPM : 0.45
+        self.truckMPG = UserDefaults.standard.double(forKey: "truckMPG")
 
         if let existing = UserDefaults.standard.string(forKey: "driverID") {
             self.driverID = existing
