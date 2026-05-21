@@ -349,9 +349,13 @@ extension VoiceManager: ClaudeToolHandler {
     }
 
     func handleSendDispatchMessage(message: String) async -> String {
-        // Message will be saved to SwiftData/CloudKit in MessagesView
-        // For now, return confirmation
-        return "Message sent to dispatch: \"\(message)\""
+        guard let context = modelContext, let driverID = appState?.driverID else {
+            return "Database unavailable. Message not sent."
+        }
+        let msg = DispatchMessage(sender: "driver", content: message, driverID: driverID)
+        context.insert(msg)
+        try? context.save()
+        return "Message sent to dispatch: \"\(message)\". It's in your Dispatch tab."
     }
 
     func handleLogExpense(amount: Double, category: String, note: String?) async -> String {
@@ -437,24 +441,77 @@ extension VoiceManager: ClaudeToolHandler {
     }
 
     func handleContactCustomer(loadNumber: String, message: String, channel: String) async -> String {
+        guard let context = modelContext, let driverID = appState?.driverID else {
+            return "Database unavailable. Communication not logged."
+        }
+
+        // Look up contact name from DeliveryContact if we have a load number
+        var contactName = "Customer"
+        if !loadNumber.isEmpty {
+            let id = driverID
+            let ln = loadNumber
+            let descriptor = FetchDescriptor<DeliveryContact>(
+                predicate: #Predicate { $0.driverID == id && $0.associatedLoadNumber == ln }
+            )
+            if let contact = (try? context.fetch(descriptor))?.first {
+                contactName = contact.contactName
+            }
+        }
+
+        let log = CommunicationLog(
+            driverID: driverID,
+            contactName: contactName,
+            loadNumber: loadNumber,
+            direction: "outbound",
+            channel: channel,
+            content: message,
+            confirmed: false
+        )
+        context.insert(log)
+        try? context.save()
+
         let loadInfo = loadNumber.isEmpty ? "" : " for load \(loadNumber)"
-        return "Message\(loadInfo) sent via \(channel): \"\(message)\". Communication logged."
+        return "Message\(loadInfo) sent to \(contactName) via \(channel): \"\(message)\". Logged in Comm Log."
     }
 
     func handleGetDeliveryContact(loadNumber: String) async -> String {
-        if loadNumber.isEmpty {
-            return "No load number provided. Check the Dispatch tab for current load contact info."
+        guard let context = modelContext, let driverID = appState?.driverID else {
+            return "Database unavailable."
         }
-        return "Delivery contact for \(loadNumber): Check the Contacts tab in the Dispatch screen for details."
+        if loadNumber.isEmpty {
+            return "No load number provided. What load number are you looking up?"
+        }
+        let id = driverID
+        let ln = loadNumber
+        let descriptor = FetchDescriptor<DeliveryContact>(
+            predicate: #Predicate { $0.driverID == id && $0.associatedLoadNumber == ln }
+        )
+        guard let contact = (try? context.fetch(descriptor))?.first else {
+            return "No contact found for load \(loadNumber). You can add one in the Contacts tab."
+        }
+        var parts: [String] = [contact.contactName]
+        if !contact.company.isEmpty { parts.append(contact.company) }
+        if !contact.phone.isEmpty { parts.append("Phone: \(contact.phone)") }
+        if !contact.email.isEmpty { parts.append("Email: \(contact.email)") }
+        if !contact.address.isEmpty { parts.append("Address: \(contact.address)") }
+        return parts.joined(separator: ". ")
     }
 
     func handleReportMaintenanceIssue(description: String, severity: String) async -> String {
-        DispatchQueue.main.async {
-            // The actual SwiftData insert happens via the MaintenanceView UI.
-            // Here we just confirm to Claude so it can inform the driver.
+        guard let context = modelContext, let driverID = appState?.driverID else {
+            return "Database unavailable. Issue not saved."
         }
-        let urgency = severity == "high" ? " This has been flagged as a safety issue. Dispatch has been notified." : ""
-        return "Maintenance issue reported: \"\(description)\" (severity: \(severity)).\(urgency) Check the Maintenance tab for details."
+        let report = MaintenanceReport(
+            driverID: driverID,
+            description: description,
+            severity: severity
+        )
+        context.insert(report)
+        try? context.save()
+        let urgency = severity == "high"
+            ? " This is flagged as a safety issue — check the Maintenance tab immediately."
+            : " It's logged in your Maintenance tab."
+        return "Maintenance issue reported: \"\(description)\" (severity: \(severity)).\(urgency)"
     }
 
     func handleGetHealthSummary() async -> String {
