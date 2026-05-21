@@ -9,6 +9,7 @@
 #if os(iOS)
 import Foundation
 import CoreLocation
+import MapKit
 import Combine
 import SwiftData
 
@@ -157,15 +158,19 @@ extension TelemetryManager: CLLocationManagerDelegate {
     }
     
     private func detectStateChange(for location: CLLocation) {
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self,
-                  let state = placemarks?.first?.administrativeArea,
-                  state != self.currentState else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            guard let request = MKReverseGeocodingRequest(location: location),
+                  let mapItems = try? await request.mapItems,
+                  let item = mapItems.first else { return }
+            // cityWithContext → "Austin, TX"; take the trailing 2-letter state code
+            let state = item.addressRepresentations?.cityWithContext?
+                .components(separatedBy: ", ").last ?? ""
+            guard state.count == 2, state != self.currentState else { return }
             let isFirstDetection = self.currentState == nil
             self.currentState = state
             guard !isFirstDetection else { return }
-            DispatchQueue.main.async { self.onStateCrossing?(state) }
+            await MainActor.run { self.onStateCrossing?(state) }
         }
     }
     

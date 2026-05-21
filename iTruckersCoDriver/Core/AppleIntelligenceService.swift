@@ -17,7 +17,7 @@ import FoundationModels
 /// Sendable wrapper holding a weak reference to the ClaudeToolHandler.
 /// @unchecked Sendable is safe here — all accesses are serialised through async/await.
 final class ToolHandlerRef: @unchecked Sendable {
-    weak var handler: (any ClaudeToolHandler)?
+    nonisolated(unsafe) weak var handler: (any ClaudeToolHandler)?
     init() {}
 }
 
