@@ -342,28 +342,79 @@ struct DispatcherDashboardView: View {
 
     // MARK: - Loads view
 
+    private var activeTrips: [TripRecord] { trips.filter(\.isActive) }
+    private var completedTrips: [TripRecord] { trips.filter { !$0.isActive } }
+
     private var loadsView: some View {
-        VStack(alignment: .leading) {
-            Text("Active Loads").font(.largeTitle).fontWeight(.bold).padding()
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Loads").font(.largeTitle).fontWeight(.bold)
+                Spacer()
+                Text("\(activeTrips.count) active · \(completedTrips.count) completed")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            .padding()
             Divider()
-            List {
-                ForEach(mockLoads, id: \.loadNumber) { load in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(load.loadNumber).fontWeight(.bold)
-                            Spacer()
-                            Text(load.status).font(.caption)
-                                .padding(.horizontal, 8).padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.15)).cornerRadius(4)
+
+            if trips.isEmpty {
+                ContentUnavailableView(
+                    "No Loads Yet",
+                    systemImage: "shippingbox",
+                    description: Text("Trips started by drivers will appear here.")
+                )
+            } else {
+                List {
+                    if !activeTrips.isEmpty {
+                        Section("Active") {
+                            ForEach(activeTrips) { trip in tripRow(trip) }
                         }
-                        Text("\(load.origin) → \(load.destination)").foregroundColor(.secondary)
-                        Label(load.driver, systemImage: "person.fill")
-                            .font(.caption).foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    if !completedTrips.isEmpty {
+                        Section("Completed") {
+                            ForEach(completedTrips.prefix(50)) { trip in tripRow(trip) }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private func tripRow(_ trip: TripRecord) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(trip.destination.isEmpty ? "Destination TBD" : "\(trip.origin) → \(trip.destination)")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text(trip.isActive ? "Active" : "Completed")
+                    .font(.caption).fontWeight(.bold)
+                    .foregroundColor(trip.isActive ? .white : .secondary)
+                    .padding(.horizontal, 8).padding(.vertical, 2)
+                    .background(trip.isActive ? Color.green : Color.clear)
+                    .cornerRadius(4)
+            }
+            HStack(spacing: 20) {
+                Label(trip.startDate.formatted(date: .abbreviated, time: .omitted),
+                      systemImage: "calendar")
+                if trip.miles > 0 {
+                    Label(String(format: "%.0f mi", trip.miles), systemImage: "road.lanes")
+                }
+                if trip.grossRevenue > 0 {
+                    let fmt = NumberFormatter()
+                    let _ = { fmt.numberStyle = .currency }()
+                    Label(fmt.string(from: NSNumber(value: trip.grossRevenue)) ?? "$0",
+                          systemImage: "dollarsign")
+                }
+                if trip.grossRevenue > 0 && trip.miles > 0 {
+                    let fmt = NumberFormatter()
+                    let _ = { fmt.numberStyle = .currency }()
+                    Label((fmt.string(from: NSNumber(value: trip.profit)) ?? "$0") + " profit",
+                          systemImage: "chart.line.uptrend.xyaxis")
+                        .foregroundColor(trip.profit >= 0 ? .green : .red)
+                }
+            }
+            .font(.caption).foregroundColor(.secondary)
+        }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Compliance summary
@@ -410,16 +461,5 @@ struct DispatcherDashboardView: View {
         return String(format: "%dh %02dm", hours, minutes)
     }
 
-    // MARK: - Mock loads
-
-    struct MockLoad {
-        let loadNumber, origin, destination, driver, status: String
-    }
-
-    private let mockLoads: [MockLoad] = [
-        MockLoad(loadNumber: "TX-48821", origin: "Dallas, TX",        destination: "Phoenix, AZ",   driver: "Assign Driver", status: "Available"),
-        MockLoad(loadNumber: "OK-38174", origin: "Oklahoma City, OK", destination: "Denver, CO",    driver: "Assign Driver", status: "Available"),
-        MockLoad(loadNumber: "NM-29033", origin: "Albuquerque, NM",   destination: "Las Vegas, NV", driver: "Assign Driver", status: "Available")
-    ]
 }
 #endif

@@ -261,6 +261,7 @@ struct ComplianceView: View {
 // MARK: - New trip sheet
 
 struct NewTripView: View {
+    @EnvironmentObject var appState: AppState
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var origin = ""
@@ -273,6 +274,13 @@ struct NewTripView: View {
                     TextField("Origin (city, state)", text: $origin)
                     TextField("Destination (city, state)", text: $destination)
                 }
+                Section {
+                    HStack {
+                        Image(systemName: "info.circle").foregroundColor(.blue)
+                        Text("Fixed cost $\(String(format: "%.2f", appState.fixedCostPerMile))/mile will be used for profit calculations. Adjust in Settings.")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                }
             }
             .navigationTitle("New Trip")
             .navigationBarTitleDisplayMode(.inline)
@@ -280,7 +288,11 @@ struct NewTripView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Start") {
-                        let trip = TripRecord(origin: origin, destination: destination)
+                        let trip = TripRecord(
+                            origin: origin,
+                            destination: destination,
+                            fixedCosts: appState.fixedCostPerMile
+                        )
                         modelContext.insert(trip)
                         try? modelContext.save()
                         dismiss()
