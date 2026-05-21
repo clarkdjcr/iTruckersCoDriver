@@ -197,8 +197,10 @@ struct SettingsView: View {
                 Text("Fixed Cost / Mile")
                 Spacer()
                 TextField("0.45", text: $fixedCostInput)
+                    #if os(iOS)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
+                    #endif
                     .foregroundColor(.secondary)
                     .frame(width: 80)
                 Text("$").foregroundColor(.secondary)
@@ -207,8 +209,10 @@ struct SettingsView: View {
                 Text("Truck MPG")
                 Spacer()
                 TextField("Auto", text: $truckMPGInput)
+                    #if os(iOS)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
+                    #endif
                     .foregroundColor(.secondary)
                     .frame(width: 80)
             }
