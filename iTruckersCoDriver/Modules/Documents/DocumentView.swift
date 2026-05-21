@@ -13,6 +13,7 @@ struct DocumentView: View {
     @StateObject private var repository = DocumentRepository()
     @State private var selectedCategory: DriverDocument.DocumentCategory? = nil
     @State private var searchText = ""
+    @State private var showReceiptScanner = false
 
     private var filteredDocs: [DriverDocument] {
         var result = repository.documents
@@ -48,11 +49,14 @@ struct DocumentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { /* Integrate VisionKit/Camera here */ }) {
+                    Button { showReceiptScanner = true } label: {
                         Image(systemName: "doc.viewfinder.fill")
                             .foregroundColor(Theme.primary)
                     }
                 }
+            }
+            .sheet(isPresented: $showReceiptScanner) {
+                ReceiptScannerSheet()
             }
         }
         .colorScheme(.dark)

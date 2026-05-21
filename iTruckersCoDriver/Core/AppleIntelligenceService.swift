@@ -258,6 +258,50 @@ struct GetDocumentTool: Tool {
     }
 }
 
+struct CalculateProfitTool: Tool {
+    let handlerRef: ToolHandlerRef
+    let name = "calculate_profit"
+    let description = "Calculate estimated true profit for a potential load based on gross revenue and total miles."
+
+    @Generable struct Arguments {
+        @Guide(description: "Gross revenue offered for the load in dollars")
+        var load_revenue: Double
+        @Guide(description: "Total miles for the trip including deadhead")
+        var miles: Double
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        guard let h = handlerRef.handler else { return "Tool handler unavailable." }
+        return await h.handleCalculateProfit(loadRevenue: arguments.load_revenue, miles: arguments.miles)
+    }
+}
+
+struct StartInspectionTool: Tool {
+    let handlerRef: ToolHandlerRef
+    let name = "start_inspection"
+    let description = "Begin a voice-guided pre-trip or post-trip vehicle inspection (DVIR)."
+
+    @Generable struct Arguments {}
+
+    func call(arguments: Arguments) async throws -> String {
+        guard let h = handlerRef.handler else { return "Tool handler unavailable." }
+        return await h.handleStartInspection()
+    }
+}
+
+struct ContinueInspectionTool: Tool {
+    let handlerRef: ToolHandlerRef
+    let name = "continue_inspection"
+    let description = "Continue to the next step of the active vehicle inspection after the driver responds."
+
+    @Generable struct Arguments {}
+
+    func call(arguments: Arguments) async throws -> String {
+        guard let h = handlerRef.handler else { return "Tool handler unavailable." }
+        return await h.handleContinueInspection()
+    }
+}
+
 // MARK: - Apple Intelligence Service
 
 class AppleIntelligenceService: CoDriverAIService {
@@ -293,7 +337,10 @@ class AppleIntelligenceService: CoDriverAIService {
             GetDeliveryContactTool(handlerRef: handlerRef),
             ReportMaintenanceIssueTool(handlerRef: handlerRef),
             GetHealthSummaryTool(handlerRef: handlerRef),
-            GetDocumentTool(handlerRef: handlerRef)
+            GetDocumentTool(handlerRef: handlerRef),
+            CalculateProfitTool(handlerRef: handlerRef),
+            StartInspectionTool(handlerRef: handlerRef),
+            ContinueInspectionTool(handlerRef: handlerRef)
         ]) {
             coDriverInstructions
         }
