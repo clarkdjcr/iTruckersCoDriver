@@ -28,17 +28,21 @@ struct MaintenanceView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                Picker("Section", selection: $selectedTab) {
-                    Text("Schedule").tag(0)
-                    Text("Reports").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding()
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    Picker("Section", selection: $selectedTab) {
+                        Text("Schedule").tag(0)
+                        Text("Reports").tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
 
-                switch selectedTab {
-                case 0: scheduleView
-                default: reportsView
+                    switch selectedTab {
+                    case 0: scheduleView
+                    default: reportsView
+                    }
                 }
             }
             .navigationTitle("Maintenance")
@@ -46,12 +50,14 @@ struct MaintenanceView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showingReport = true } label: {
-                        Image(systemName: "exclamationmark.triangle")
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(Theme.accent)
                     }
                 }
             }
             .sheet(isPresented: $showingReport) { ReportIssueView() }
         }
+        .colorScheme(.dark)
     }
 
     // MARK: - Schedule Tab
@@ -59,11 +65,7 @@ struct MaintenanceView: View {
     private var scheduleView: some View {
         Group {
             if myItems.isEmpty {
-                ContentUnavailableView(
-                    "No Maintenance Items",
-                    systemImage: "wrench.and.screwdriver",
-                    description: Text("Scheduled maintenance items will appear here.")
-                )
+                emptyMaintenanceView
             } else {
                 List {
                     let overdue = myItems.filter(\.isOverdue)
@@ -71,22 +73,22 @@ struct MaintenanceView: View {
                     let upcoming = myItems.filter { !$0.isDue }
 
                     if !overdue.isEmpty {
-                        Section(header: Label("Overdue", systemImage: "exclamationmark.triangle.fill").foregroundColor(.red)) {
+                        Section(header: Text("OVERDUE").font(Theme.Typography.caption(10)).foregroundColor(Theme.accent)) {
                             ForEach(overdue) { item in itemRow(item, status: .overdue) }
                         }
                     }
                     if !due.isEmpty {
-                        Section(header: Label("Due Now", systemImage: "clock.fill").foregroundColor(.orange)) {
+                        Section(header: Text("DUE NOW").font(Theme.Typography.caption(10)).foregroundColor(Theme.warning)) {
                             ForEach(due) { item in itemRow(item, status: .due) }
                         }
                     }
                     if !upcoming.isEmpty {
-                        Section("Upcoming") {
+                        Section(header: Text("UPCOMING").font(Theme.Typography.caption(10)).foregroundColor(Theme.textSecondary)) {
                             ForEach(upcoming) { item in itemRow(item, status: .ok) }
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
             }
         }
     }
@@ -94,30 +96,42 @@ struct MaintenanceView: View {
     private enum ItemStatus { case overdue, due, ok }
 
     private func itemRow(_ item: MaintenanceItem, status: ItemStatus) -> some View {
-        HStack {
-            Image(systemName: item.categoryIcon)
-                .foregroundColor(status == .overdue ? .red : status == .due ? .orange : .green)
-                .frame(width: 24)
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill((status == .overdue ? Theme.accent : status == .due ? Theme.warning : Theme.success).opacity(0.1))
+                    .frame(width: 40, height: 40)
+                Image(systemName: item.categoryIcon)
+                    .foregroundColor(status == .overdue ? Theme.accent : status == .due ? Theme.warning : Theme.success)
+                    .font(.system(size: 16, weight: .bold))
+            }
+            
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.itemDescription).fontWeight(.medium)
+                Text(item.itemDescription)
+                    .font(Theme.Typography.body())
+                    .fontWeight(.bold)
+                
                 if let next = item.nextDueDate {
                     Text("Next: \(next.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption).foregroundColor(.secondary)
+                        .font(Theme.Typography.caption())
+                        .foregroundColor(Theme.textSecondary)
                 } else if item.intervalMiles > 0 {
                     let remaining = item.intervalMiles - (item.currentOdometer - item.lastServiceMiles)
                     Text(remaining > 0 ? "Due in \(Int(remaining)) miles" : "OVERDUE")
-                        .font(.caption)
-                        .foregroundColor(remaining > 0 ? .secondary : .red)
+                        .font(Theme.Typography.caption())
+                        .foregroundColor(remaining > 0 ? Theme.textSecondary : Theme.accent)
                 }
             }
             Spacer()
-            switch status {
-            case .overdue: Image(systemName: "exclamationmark.circle.fill").foregroundColor(.red)
-            case .due: Image(systemName: "clock.fill").foregroundColor(.orange)
-            case .ok: EmptyView()
+            
+            if status != .ok {
+                Image(systemName: status == .overdue ? "exclamationmark.circle.fill" : "clock.fill")
+                    .foregroundColor(status == .overdue ? Theme.accent : Theme.warning)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
+        .listRowBackground(Color.white.opacity(0.05))
+        .listRowSeparatorTint(Color.white.opacity(0.1))
     }
 
     // MARK: - Reports Tab
@@ -125,36 +139,77 @@ struct MaintenanceView: View {
     private var reportsView: some View {
         Group {
             if myReports.isEmpty {
-                ContentUnavailableView(
-                    "No Reports",
-                    systemImage: "doc.text.magnifyingglass",
-                    description: Text("Tap the warning button to report a maintenance issue.")
-                )
+                emptyReportsView
             } else {
-                List(myReports) { report in reportRow(report) }
-                    .listStyle(.insetGrouped)
+                List(myReports) { report in 
+                    reportRow(report)
+                        .listRowBackground(Color.white.opacity(0.05))
+                        .listRowSeparatorTint(Color.white.opacity(0.1))
+                }
+                .listStyle(.plain)
             }
         }
     }
 
     private func reportRow(_ report: MaintenanceReport) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Circle()
-                    .fill(report.severity == "high" ? Color.red : report.severity == "medium" ? Color.orange : Color.yellow)
-                    .frame(width: 8, height: 8)
-                Text(report.issueDescription).fontWeight(.medium)
-                Spacer()
-                if report.resolved {
-                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+        HStack(spacing: 16) {
+            Circle()
+                .fill(report.severity == "high" ? Theme.accent : report.severity == "medium" ? Theme.warning : Color.yellow)
+                .frame(width: 10, height: 10)
+                .shadow(color: (report.severity == "high" ? Theme.accent : report.severity == "medium" ? Theme.warning : Color.yellow).opacity(0.5), radius: 4)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(report.issueDescription)
+                    .font(Theme.Typography.body())
+                    .fontWeight(.bold)
+                
+                HStack(spacing: 12) {
+                    Text(report.timestamp.formatted(date: .abbreviated, time: .shortened))
+                    Text("•")
+                    Text(report.severity.uppercased())
                 }
+                .font(Theme.Typography.caption())
+                .foregroundColor(Theme.textSecondary)
             }
-            Text(report.timestamp.formatted(date: .abbreviated, time: .shortened))
-                .font(.caption).foregroundColor(.secondary)
-            Text("Severity: \(report.severity.capitalized)")
-                .font(.caption2).foregroundColor(.secondary)
+            Spacer()
+            
+            if report.resolved {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(Theme.success)
+            }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
+    }
+
+    private var emptyMaintenanceView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "wrench.and.screwdriver.fill")
+                .font(.system(size: 60))
+                .foregroundColor(Color.white.opacity(0.1))
+            Text("No Maintenance Items")
+                .font(Theme.Typography.title(20))
+            Text("Scheduled items will appear here.")
+                .font(Theme.Typography.body())
+                .foregroundColor(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 100)
+    }
+
+    private var emptyReportsView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 60))
+                .foregroundColor(Color.white.opacity(0.1))
+            Text("No Reports")
+                .font(Theme.Typography.title(20))
+            Text("Report issues using the button in the top right.")
+                .font(Theme.Typography.body())
+                .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 100)
     }
 }
 

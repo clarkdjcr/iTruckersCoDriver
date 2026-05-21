@@ -203,6 +203,42 @@ private let truckingTools: [[String: Any]] = [
             ],
             "required": ["document_name"]
         ]
+    ],
+    [
+        "name": "calculate_profit",
+        "description": "Calculate the estimated true profit for a potential load based on revenue and miles.",
+        "input_schema": [
+            "type": "object",
+            "properties": [
+                "load_revenue": [
+                    "type": "number",
+                    "description": "The gross revenue offered for the load"
+                ],
+                "miles": [
+                    "type": "number",
+                    "description": "Total miles for the trip (including deadhead)"
+                ]
+            ],
+            "required": ["load_revenue", "miles"]
+        ]
+    ],
+    [
+        "name": "start_inspection",
+        "description": "Begin a voice-guided pre-trip or post-trip vehicle inspection (DVIR).",
+        "input_schema": [
+            "type": "object",
+            "properties": [:],
+            "required": [] as [String]
+        ]
+    ],
+    [
+        "name": "continue_inspection",
+        "description": "Continue with the next step of the current vehicle inspection.",
+        "input_schema": [
+            "type": "object",
+            "properties": [:],
+            "required": [] as [String]
+        ]
     ]
 ]
 
@@ -267,6 +303,9 @@ protocol ClaudeToolHandler: AnyObject {
     func handleReportMaintenanceIssue(description: String, severity: String) async -> String
     func handleGetHealthSummary() async -> String
     func handleGetDocument(documentName: String) async -> String
+    func handleCalculateProfit(loadRevenue: Double, miles: Double) async -> String
+    func handleStartInspection() async -> String
+    func handleContinueInspection() async -> String
 }
 
 // MARK: - Claude Service
@@ -582,6 +621,17 @@ class ClaudeService: CoDriverAIService {
         case "get_document":
             let documentName = tool.input["document_name"] as? String ?? ""
             return await handler.handleGetDocument(documentName: documentName)
+
+        case "calculate_profit":
+            let revenue = tool.input["load_revenue"] as? Double ?? 0
+            let miles = tool.input["miles"] as? Double ?? 0
+            return await handler.handleCalculateProfit(loadRevenue: revenue, miles: miles)
+
+        case "start_inspection":
+            return await handler.handleStartInspection()
+            
+        case "continue_inspection":
+            return await handler.handleContinueInspection()
 
         default:
             return "Unknown tool: \(tool.name)"

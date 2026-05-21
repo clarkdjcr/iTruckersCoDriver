@@ -67,6 +67,7 @@ struct DriverView: View {
         .onAppear {
             voiceManager.appState = appState
             voiceManager.driverState = driverState
+            voiceManager.configure(modelContext: modelContext)
             telemetryManager.driverState = driverState
             telemetryManager.configure(driverID: appState.driverID, context: modelContext)
             syncDriverProfile()
@@ -119,25 +120,39 @@ struct VoiceTabView: View {
     @ObservedObject var voiceManager: VoiceManager
     @ObservedObject var telemetryManager: TelemetryManager
     @State private var showAPIKeyAlert = false
+    @State private var micPulseScale: CGFloat = 1.0
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Theme.background.ignoresSafeArea()
+                
+                // Background Gradient
+                RadialGradient(
+                    gradient: Gradient(colors: [Theme.primary.opacity(0.15), .clear]),
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 500
+                ).ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // HOS alert banner
-                    if !driverState.hosRemaining.isCompliant {
-                        hosAlertBanner
-                    }
-                    // Low fuel warning (< 50 miles range or fuel < 20%)
-                    if telemetryManager.fuelLevelGallons > 0 && telemetryManager.isLowFuel {
-                        fuelWarningBanner
+                    // Modern Header Dashboard
+                    headerDashboard
+                        .padding(.top, 8)
+
+                    // Alert area
+                    if !driverState.hosRemaining.isCompliant || (telemetryManager.fuelLevelGallons > 0 && telemetryManager.isLowFuel) {
+                        VStack(spacing: 8) {
+                            if !driverState.hosRemaining.isCompliant { hosAlertBanner }
+                            if telemetryManager.fuelLevelGallons > 0 && telemetryManager.isLowFuel { fuelWarningBanner }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
                     }
 
                     ScrollViewReader { proxy in
                         ScrollView {
-                            LazyVStack(spacing: 12) {
+                            LazyVStack(spacing: 16) {
                                 if driverState.conversationHistory.isEmpty {
                                     welcomeMessage
                                 }
@@ -152,7 +167,7 @@ struct VoiceTabView: View {
                         }
                         .onChange(of: driverState.conversationHistory.count) {
                             if let last = driverState.conversationHistory.last {
-                                withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                                withAnimation(.spring()) { proxy.scrollTo(last.id, anchor: .bottom) }
                             }
                         }
                         .onChange(of: driverState.isProcessingAI) {
@@ -160,63 +175,28 @@ struct VoiceTabView: View {
                         }
                     }
 
-                    VStack(spacing: 12) {
-                        HStack {
-                            Image(systemName: driverState.currentDutyStatus.systemImage)
-                                .foregroundColor(dutyStatusColor)
-                            Text(driverState.currentDutyStatus.displayName)
-                                .font(.caption).foregroundColor(.gray)
-                            Spacer()
-                            Text(driverState.hosRemaining.driveTimeRemainingFormatted + " drive")
-                                .font(.caption).foregroundColor(.gray)
-                        }
-                        .padding(.horizontal)
-
-                        Button(action: handleMicTap) {
-                            ZStack {
-                                Circle()
-                                    .fill(micButtonColor)
-                                    .frame(width: 110, height: 110)
-                                    .shadow(color: micButtonColor.opacity(0.4), radius: voiceManager.isListening ? 16 : 0)
-                                Image(systemName: micIcon)
-                                    .font(.system(size: 44))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .disabled(driverState.isProcessingAI)
-                        .opacity(driverState.isProcessingAI ? 0.5 : 1.0)
-
-                        Text(voiceManager.statusMessage)
-                            .font(.subheadline)
-                            .foregroundColor(voiceManager.isListening ? .green : .gray)
-
+                    // Interactive Bottom Bar
+                    VStack(spacing: 20) {
                         if !voiceManager.isListening && !driverState.isProcessingAI {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(quickCommands, id: \.self) { cmd in
-                                        Text(cmd)
-                                            .font(.caption).foregroundColor(.white)
-                                            .padding(.horizontal, 12).padding(.vertical, 6)
-                                            .background(Color.white.opacity(0.1))
-                                            .cornerRadius(16)
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
+                            quickCommandsScroll
                         }
+
+                        micButtonSection
                     }
-                    .padding(.vertical, 12)
-                    .background(Color.black)
+                    .padding(.bottom, 20)
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .mask(LinearGradient(gradient: Gradient(colors: [.clear, .black]), startPoint: .top, endPoint: .bottom))
+                    )
                 }
             }
             .navigationTitle("Co-Driver")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color.black, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { driverState.clearConversation() } label: {
-                        Image(systemName: "arrow.clockwise").foregroundColor(.gray)
+                        Image(systemName: "trash").foregroundColor(Theme.textSecondary)
                     }
                 }
             }
@@ -230,36 +210,175 @@ struct VoiceTabView: View {
         }
     }
 
+    // MARK: - Premium Header
+    
+    private var headerDashboard: some View {
+        HStack(spacing: 12) {
+            dashboardCard(
+                title: "DRIVE",
+                value: driverState.hosRemaining.driveTimeRemainingFormatted,
+                icon: "clock.fill",
+                color: Theme.primary
+            )
+            dashboardCard(
+                title: "FUEL",
+                value: "\(Int(driverState.fuelLevel))%",
+                icon: "fuelpump.fill",
+                color: driverState.fuelLevel < 20 ? Theme.warning : Theme.success
+            )
+            dashboardCard(
+                title: "SPEED",
+                value: "\(Int(driverState.currentSpeedMPH))",
+                subtitle: "MPH",
+                icon: "speedometer",
+                color: Theme.textPrimary
+            )
+        }
+        .padding(.horizontal)
+    }
+
+    private func dashboardCard(title: String, value: String, subtitle: String? = nil, icon: String, color: Color) -> some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.caption)
+                    Text(title)
+                        .font(Theme.Typography.caption(10))
+                        .kerning(1.2)
+                }
+                .foregroundColor(Theme.textSecondary)
+                
+                HStack(alignment: .bottom, spacing: 2) {
+                    Text(value)
+                        .font(Theme.Typography.title(22))
+                        .foregroundColor(color)
+                    if let sub = subtitle {
+                        Text(sub)
+                            .font(Theme.Typography.caption(10))
+                            .foregroundColor(Theme.textSecondary)
+                            .padding(.bottom, 4)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: - Mic Section
+
+    private var micButtonSection: some View {
+        VStack(spacing: 12) {
+            Button(action: handleMicTap) {
+                ZStack {
+                    // Pulsing circles when listening
+                    if voiceManager.isListening {
+                        Circle()
+                            .stroke(Theme.primary.opacity(0.3), lineWidth: 4)
+                            .scaleEffect(micPulseScale)
+                            .opacity(Double(2 - micPulseScale))
+                            .onAppear {
+                                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: false)) {
+                                    micPulseScale = 2.0
+                                }
+                            }
+                    }
+                    
+                    Circle()
+                        .fill(Theme.primaryGradient)
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Theme.primary.opacity(0.5), radius: 15, x: 0, y: 10)
+                    
+                    Image(systemName: micIcon)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(voiceManager.isListening ? 1.2 : 1.0)
+                }
+            }
+            .disabled(driverState.isProcessingAI)
+            .animation(.spring(), value: voiceManager.isListening)
+
+            Text(voiceManager.statusMessage)
+                .font(Theme.Typography.caption())
+                .foregroundColor(voiceManager.isListening ? Theme.primary : Theme.textSecondary)
+        }
+    }
+
+    private var quickCommandsScroll: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(quickCommands, id: \.self) { cmd in
+                    Button(action: { /* Handle command */ }) {
+                        Text(cmd)
+                            .font(Theme.Typography.caption())
+                            .foregroundColor(Theme.textPrimary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
     // MARK: - Sub-views
 
     private func conversationBubble(_ message: ConversationMessage) -> some View {
         HStack {
-            if message.role == "user" { Spacer(minLength: 40) }
+            if message.role == "user" { Spacer(minLength: 60) }
+            
             Text(message.content)
-                .font(.body).padding(12)
-                .background(message.role == "user" ? Color.blue : Color.gray.opacity(0.3))
-                .foregroundColor(.white).cornerRadius(16)
-            if message.role == "assistant" { Spacer(minLength: 40) }
+                .font(Theme.Typography.body())
+                .padding(14)
+                .background(message.role == "user" ? Theme.primary : Color.white.opacity(0.1))
+                .foregroundColor(.white)
+                .cornerRadius(18, corners: message.role == "user" ? [.topLeft, .topRight, .bottomLeft] : [.topLeft, .topRight, .bottomRight])
+            
+            if message.role == "assistant" { Spacer(minLength: 60) }
         }
+        .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
     }
 
     private var welcomeMessage: some View {
-        VStack(spacing: 8) {
-            Text("🚛").font(.system(size: 48))
-            Text("Hey driver! Tap the mic and let's roll.")
-                .font(.body).foregroundColor(.gray).multilineTextAlignment(.center)
-            Text("Ask me about fuel stops, weather, HOS log, navigation — or just say hi.")
-                .font(.caption).foregroundColor(.gray.opacity(0.7)).multilineTextAlignment(.center)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Theme.primary.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "truck.box.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(Theme.primary)
+            }
+            
+            VStack(spacing: 8) {
+                Text("Welcome Back, Driver")
+                    .font(Theme.Typography.title(24))
+                Text("Tap the mic to start your pre-trip, log status, or find a route.")
+                    .font(Theme.Typography.body())
+                    .foregroundColor(Theme.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
         }
-        .padding(.top, 40).padding(.horizontal)
+        .padding(.top, 60)
+        .padding(.horizontal, 40)
     }
 
     private var thinkingIndicator: some View {
-        HStack {
-            ProgressView().tint(.gray)
-            Text("Co-Driver is thinking...").font(.caption).foregroundColor(.gray)
+        HStack(spacing: 12) {
+            ProgressView()
+                .tint(Theme.primary)
+            Text("Co-Driver is thinking...")
+                .font(Theme.Typography.caption())
+                .foregroundColor(Theme.textSecondary)
             Spacer()
         }
+        .padding(.horizontal)
         .id("thinking")
     }
 
@@ -267,24 +386,28 @@ struct VoiceTabView: View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
             Text(driverState.hosRemaining.alerts.first ?? "HOS limit approaching")
-                .font(.caption).lineLimit(1)
+                .font(Theme.Typography.caption())
             Spacer()
         }
-        .foregroundColor(.white).padding(.horizontal).padding(.vertical, 8)
-        .background(Color.red)
+        .foregroundColor(.white)
+        .padding()
+        .background(Theme.accent)
+        .cornerRadius(14)
     }
 
     private var fuelWarningBanner: some View {
         HStack {
             Image(systemName: "fuelpump.exclamationmark.fill")
             Text(driverState.estimatedRange < 50
-                 ? "Low fuel — estimated range \(Int(driverState.estimatedRange)) miles"
-                 : "Fuel below 20% — consider refueling soon")
-                .font(.caption).lineLimit(1)
+                 ? "Low fuel — range \(Int(driverState.estimatedRange)) miles"
+                 : "Fuel below 20% — consider refueling")
+                .font(Theme.Typography.caption())
             Spacer()
         }
-        .foregroundColor(.white).padding(.horizontal).padding(.vertical, 8)
-        .background(Color.orange)
+        .foregroundColor(.white)
+        .padding()
+        .background(Theme.warning)
+        .cornerRadius(14)
     }
 
     // MARK: - Helpers
@@ -294,29 +417,31 @@ struct VoiceTabView: View {
         voiceManager.toggleListening()
     }
 
-    private var micButtonColor: Color {
-        if !voiceManager.permissionsGranted { return .gray }
-        if voiceManager.isListening { return .red }
-        return .blue
-    }
-
     private var micIcon: String {
         if driverState.isProcessingAI { return "cpu" }
         return voiceManager.isListening ? "waveform" : "mic.fill"
     }
 
-    private var dutyStatusColor: Color {
-        switch driverState.currentDutyStatus {
-        case .offDuty: return .gray
-        case .sleeperBerth: return .purple
-        case .driving: return .red
-        case .onDuty: return .orange
-        }
-    }
-
     private let quickCommands = [
-        "Starting my drive", "Find fuel", "Find rest area",
-        "Weather check", "How many hours left?", "Taking a break", "Tell me a joke"
+        "Start Inspection", "Am I compliant?", "Log Fuel",
+        "Weather check", "Profit for load?", "Taking a break"
     ]
+}
+
+// Helper for rounded corners
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
 }
 #endif

@@ -23,6 +23,9 @@ class TelemetryManager: NSObject, ObservableObject {
     private var driverID: String = ""
     private var telemetryTimer: Timer?
     private var avgMPG: Double = 6.5  // typical loaded truck default
+    private var locationManager = CLLocationManager()
+    private var currentState: String?
+    private var lastLocation: CLLocation?
 
     // Set by DriverView after init
     weak var driverState: DriverState?
@@ -30,6 +33,12 @@ class TelemetryManager: NSObject, ObservableObject {
     func configure(driverID: String, context: ModelContext) {
         self.driverID = driverID
         self.modelContext = context
+        
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
+        
         loadAvgMPG()
         startTelemetry()
     }
@@ -118,9 +127,58 @@ class TelemetryManager: NSObject, ObservableObject {
         context.insert(metrics)
         try? context.save()
     }
-
+    
     deinit {
         telemetryTimer?.invalidate()
+    }
+}
+
+extension TelemetryManager: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        
+        let speedMPH = max(0, location.speed * 2.23694)
+        updateSpeed(speedMPH)
+        
+        // Calculate mileage if we have a last location
+        if let last = lastLocation {
+            let distanceMeters = location.distance(from: last)
+            let distanceMiles = distanceMeters / 1609.34
+            if distanceMiles > 0.01 { // noise threshold
+                updateOdometer(currentOdometer + distanceMiles)
+                recordIFTAMileage(distanceMiles)
+            }
+        }
+        
+        lastLocation = location
+        detectStateChange(for: location)
+    }
+    
+    private func detectStateChange(for location: CLLocation) {
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+            guard let self = self,
+                  let state = placemarks?.first?.administrativeArea,
+                  state != self.currentState else { return }
+            
+            let oldState = self.currentState ?? "Unknown"
+            self.currentState = state
+            print("🚚 State Line Crossed: \(oldState) -> \(state)")
+            // Future: Trigger voice notification via VoiceManager
+        }
+    }
+    
+    private func recordIFTAMileage(_ miles: Double) {
+        guard let state = currentState, let context = modelContext else { return }
+        
+        // Find active TripRecord
+        let descriptor = FetchDescriptor<TripRecord>(
+            predicate: #Predicate { $0.endDate == nil }
+        )
+        if let activeTrip = (try? context.fetch(descriptor))?.first {
+            activeTrip.addStateMiles(miles, state: state)
+            try? context.save()
+        }
     }
 }
 #endif

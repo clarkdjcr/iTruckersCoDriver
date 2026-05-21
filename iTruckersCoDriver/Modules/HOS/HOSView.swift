@@ -17,74 +17,112 @@ struct HOSView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Compliance status banner
-                    if !hosManager.summary.isCompliant {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            VStack(alignment: .leading) {
-                                ForEach(hosManager.summary.alerts, id: \.self) { alert in
-                                    Text(alert).font(.caption)
-                                }
-                            }
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Compliance status banner
+                        if !hosManager.summary.isCompliant {
+                            complianceAlertBanner
                         }
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
+
+                        // Current status hero section
+                        currentStatusHero
+
+                        // Hours remaining cards
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("LOG SUMMARY")
+                                .font(Theme.Typography.caption(10))
+                                .kerning(1.2)
+                                .foregroundColor(Theme.textSecondary)
+                                .padding(.horizontal)
+                            
+                            hoursGrid
+                        }
+
+                        // Duty status selection
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("DUTY STATUS")
+                                .font(Theme.Typography.caption(10))
+                                .kerning(1.2)
+                                .foregroundColor(Theme.textSecondary)
+                                .padding(.horizontal)
+                            
+                            dutyStatusSelection
+                        }
+
+                        // Recent activity
+                        recentActivitySection
                     }
-
-                    // Current status card
-                    currentStatusCard
-
-                    // Hours remaining cards
-                    hoursGrid
-
-                    // Duty status buttons
-                    dutyStatusButtons
-
-                    // Today's log
-                    todayLogSection
+                    .padding(.vertical)
                 }
-                .padding(.vertical)
             }
-            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Hours of Service")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .onAppear {
             hosManager.configure(with: modelContext)
         }
     }
 
-    // MARK: - Current status card
-
-    private var currentStatusCard: some View {
-        HStack(spacing: 16) {
-            Image(systemName: driverState.currentDutyStatus.systemImage)
-                .font(.system(size: 40))
-                .foregroundColor(statusColor(driverState.currentDutyStatus))
-
-            VStack(alignment: .leading) {
-                Text("Current Status")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(driverState.currentDutyStatus.displayName)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                if let lastEntry = allEntries.first {
-                    Text("Since \(lastEntry.timestamp.formatted(date: .omitted, time: .shortened))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+    // MARK: - Compliance Banner
+    
+    private var complianceAlertBanner: some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(hosManager.summary.alerts, id: \.self) { alert in
+                    Text(alert)
+                        .font(Theme.Typography.caption())
+                        .fontWeight(.bold)
                 }
             }
             Spacer()
         }
+        .foregroundColor(.white)
         .padding()
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .background(Theme.accent)
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
+
+    // MARK: - Current Status Hero
+    
+    private var currentStatusHero: some View {
+        GlassCard {
+            HStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .fill(statusColor(driverState.currentDutyStatus).opacity(0.1))
+                        .frame(width: 80, height: 80)
+                    
+                    Image(systemName: driverState.currentDutyStatus.systemImage)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(statusColor(driverState.currentDutyStatus))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CURRENT STATUS")
+                        .font(Theme.Typography.caption(10))
+                        .kerning(1.2)
+                        .foregroundColor(Theme.textSecondary)
+                    
+                    Text(driverState.currentDutyStatus.displayName)
+                        .font(Theme.Typography.title(24))
+                        .foregroundColor(.white)
+                    
+                    if let lastEntry = allEntries.first {
+                        Text("Active since \(lastEntry.timestamp.formatted(date: .omitted, time: .shortened))")
+                            .font(Theme.Typography.caption())
+                            .foregroundColor(Theme.textSecondary)
+                    }
+                }
+                Spacer()
+            }
+        }
         .padding(.horizontal)
     }
 
@@ -93,28 +131,28 @@ struct HOSView: View {
     private var hoursGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             hoursCard(
-                title: "Drive Time",
+                title: "DRIVE TIME",
                 remaining: hosManager.summary.driveTimeRemaining,
                 max: 11 * 3600,
-                color: .blue
+                color: Theme.primary
             )
             hoursCard(
-                title: "On-Duty Window",
+                title: "ON-DUTY WINDOW",
                 remaining: hosManager.summary.onDutyTimeRemaining,
                 max: 14 * 3600,
-                color: .orange
+                color: Theme.warning
             )
             hoursCard(
-                title: "Cycle Hours",
+                title: "CYCLE HOURS",
                 remaining: hosManager.summary.cycleHoursRemaining,
                 max: 70 * 3600,
                 color: .purple
             )
             hoursCard(
-                title: "Until Break",
+                title: "UNTIL BREAK",
                 remaining: hosManager.summary.breakTimeUntilRequired,
                 max: 8 * 3600,
-                color: .green
+                color: Theme.success
             )
         }
         .padding(.horizontal)
@@ -122,107 +160,141 @@ struct HOSView: View {
 
     private func hoursCard(title: String, remaining: TimeInterval, max: TimeInterval, color: Color) -> some View {
         let fraction = max > 0 ? min(1, remaining / max) : 0
-        let isLow = fraction < 0.25
-        return VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Text(formatInterval(remaining))
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(isLow ? .red : .primary)
-            ProgressView(value: fraction)
-                .tint(isLow ? .red : color)
+        let isLow = fraction < 0.15
+        
+        return GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(title)
+                    .font(Theme.Typography.caption(10))
+                    .kerning(1.0)
+                    .foregroundColor(Theme.textSecondary)
+                
+                Text(formatInterval(remaining))
+                    .font(Theme.Typography.title(22))
+                    .foregroundColor(isLow ? Theme.accent : .white)
+                
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 6)
+                        
+                        Capsule()
+                            .fill(isLow ? Theme.accent : color)
+                            .frame(width: geo.size.width * fraction, height: 6)
+                    }
+                }
+                .frame(height: 6)
+            }
         }
-        .padding()
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
     }
 
-    // MARK: - Duty status buttons
+    // MARK: - Duty Status Selection
 
-    private var dutyStatusButtons: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Change Status")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                ForEach(DutyStatus.allCases, id: \.self) { status in
-                    Button {
+    private var dutyStatusSelection: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            ForEach(DutyStatus.allCases, id: \.self) { status in
+                Button {
+                    withAnimation(.spring()) {
                         let entry = hosManager.logDutyChange(status: status)
                         driverState.currentDutyStatus = status
                         driverState.hosRemaining = hosManager.summary
                         _ = entry
-                    } label: {
-                        HStack {
-                            Image(systemName: status.systemImage)
-                            Text(status.displayName)
-                                .font(.subheadline)
-                                .minimumScaleFactor(0.7)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(12)
-                        .background(driverState.currentDutyStatus == status ? statusColor(status).opacity(0.2) : Color(uiColor: .secondarySystemGroupedBackground))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(driverState.currentDutyStatus == status ? statusColor(status) : Color.clear, lineWidth: 2)
-                        )
-                        .cornerRadius(10)
                     }
-                    .foregroundColor(driverState.currentDutyStatus == status ? statusColor(status) : .primary)
+                } label: {
+                    HStack {
+                        Image(systemName: status.systemImage)
+                            .font(.system(size: 14, weight: .bold))
+                        Text(status.displayName)
+                            .font(Theme.Typography.caption())
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        driverState.currentDutyStatus == status 
+                        ? statusColor(status).opacity(0.2) 
+                        : Color.white.opacity(0.05)
+                    )
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(
+                                driverState.currentDutyStatus == status 
+                                ? statusColor(status) 
+                                : Color.white.opacity(0.1), 
+                                lineWidth: 1.5
+                            )
+                    )
                 }
+                .foregroundColor(driverState.currentDutyStatus == status ? statusColor(status) : .white)
             }
-            .padding(.horizontal)
         }
+        .padding(.horizontal)
     }
 
-    // MARK: - Today's log
+    // MARK: - Recent Activity
 
-    private var todayLogSection: some View {
+    private var recentActivitySection: some View {
         let today = Calendar.current.startOfDay(for: Date())
         let todayEntries = allEntries.filter { $0.timestamp >= today }
 
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("Today's Log")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("TODAY'S ACTIVITY")
+                    .font(Theme.Typography.caption(10))
+                    .kerning(1.2)
+                    .foregroundColor(Theme.textSecondary)
+                Spacer()
+                Text("\(todayEntries.count) events")
+                    .font(Theme.Typography.caption(10))
+                    .foregroundColor(Theme.textSecondary)
+            }
+            .padding(.horizontal)
 
             if todayEntries.isEmpty {
-                Text("No entries today")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-            } else {
-                ForEach(todayEntries) { entry in
-                    HStack(spacing: 12) {
-                        Image(systemName: entry.dutyStatus.systemImage)
-                            .foregroundColor(statusColor(entry.dutyStatus))
-                            .frame(width: 24)
-                        VStack(alignment: .leading) {
-                            Text(entry.dutyStatus.displayName)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            if !entry.locationName.isEmpty {
-                                Text(entry.locationName)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        Spacer()
-                        Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color(uiColor: .secondarySystemGroupedBackground))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
+                GlassCard {
+                    Text("No activity recorded for today")
+                        .font(Theme.Typography.caption())
+                        .foregroundColor(Theme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
                 }
+                .padding(.horizontal)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(todayEntries) { entry in
+                        HStack(spacing: 16) {
+                            Circle()
+                                .fill(statusColor(entry.dutyStatus).opacity(0.2))
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    Image(systemName: entry.dutyStatus.systemImage)
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(statusColor(entry.dutyStatus))
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.dutyStatus.displayName)
+                                    .font(Theme.Typography.body(14))
+                                    .fontWeight(.bold)
+                                if !entry.locationName.isEmpty {
+                                    Text(entry.locationName)
+                                        .font(Theme.Typography.caption(10))
+                                        .foregroundColor(Theme.textSecondary)
+                                }
+                            }
+                            Spacer()
+                            Text(entry.timestamp.formatted(date: .omitted, time: .shortened))
+                                .font(Theme.Typography.caption(12))
+                                .foregroundColor(Theme.textSecondary)
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(14)
+                    }
+                }
+                .padding(.horizontal)
             }
         }
     }
@@ -233,8 +305,8 @@ struct HOSView: View {
         switch status {
         case .offDuty: return .gray
         case .sleeperBerth: return .purple
-        case .driving: return .red
-        case .onDuty: return .orange
+        case .driving: return Theme.accent
+        case .onDuty: return Theme.warning
         }
     }
 

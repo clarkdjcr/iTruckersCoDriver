@@ -19,10 +19,15 @@ final class TripRecord {
     var fuelGallons: Double = 0
     var grossRevenue: Double = 0
     var notes: String = ""
+    
+    // Advanced fields
+    var fixedCostsPerMile: Double = 0.45 // placeholder: insurance, truck payment, etc.
+    var currentAvgFuelPrice: Double = 4.50 // fallback average
+    
     // IFTA state-by-state mileage stored as JSON string
     var stateMileageJSON: String = "{}"
 
-    init(origin: String, destination: String) {
+    init(origin: String, destination: String, fixedCosts: Double = 0.45) {
         self.id = UUID()
         self.startDate = Date()
         self.endDate = nil
@@ -32,15 +37,33 @@ final class TripRecord {
         self.fuelGallons = 0
         self.grossRevenue = 0
         self.notes = ""
+        self.fixedCostsPerMile = fixedCosts
         self.stateMileageJSON = "{}"
     }
 
     var isActive: Bool { endDate == nil }
 
-    var profit: Double { grossRevenue - totalExpenses }
+    /// Calculates "True Profit": Revenue - (Fuel + Maintenance + Fixed Costs)
+    var profit: Double { 
+        grossRevenue - totalExpenses 
+    }
 
-    var totalExpenses: Double { fuelCost }
-    var fuelCost: Double { fuelGallons * 4.50 } // avg diesel price placeholder
+    var totalExpenses: Double { 
+        fuelCost + fixedExpenses
+    }
+    
+    var fuelCost: Double { 
+        fuelGallons * currentAvgFuelPrice 
+    }
+    
+    var fixedExpenses: Double {
+        miles * fixedCostsPerMile
+    }
+
+    var profitPerMile: Double {
+        guard miles > 0 else { return 0 }
+        return profit / miles
+    }
 
     var stateMileage: [String: Double] {
         get {
@@ -59,9 +82,12 @@ final class TripRecord {
         stateMileage = current
     }
 
-    func complete(endMiles: Double, revenue: Double) {
+    func complete(endMiles: Double, revenue: Double, avgFuelPrice: Double? = nil) {
         self.endDate = Date()
         self.miles = endMiles
         self.grossRevenue = revenue
+        if let avgFuelPrice {
+            self.currentAvgFuelPrice = avgFuelPrice
+        }
     }
 }

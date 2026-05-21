@@ -122,15 +122,30 @@ class HealthManager: ObservableObject {
 
     private func recalculateFatigue() {
         var score = 0
-        // Low sleep → high fatigue
-        if sleepHoursLast24 < 5 { score += 40 }
-        else if sleepHoursLast24 < 6 { score += 25 }
-        else if sleepHoursLast24 < 7 { score += 10 }
-        // Elevated HR relative to resting
-        if restingHeartRate > 0 && currentHeartRate > restingHeartRate * 1.3 { score += 20 }
-        // Low HRV → fatigue
-        if hrv > 0 && hrv < 20 { score += 30 }
-        else if hrv > 0 && hrv < 40 { score += 15 }
+        
+        // 1. Sleep debt (Primary factor)
+        if sleepHoursLast24 < 4 { score += 50 }
+        else if sleepHoursLast24 < 5.5 { score += 35 }
+        else if sleepHoursLast24 < 7 { score += 15 }
+        
+        // 2. Physiological Strain (HR relative to resting)
+        if restingHeartRate > 0 && currentHeartRate > restingHeartRate * 1.4 { 
+            score += 25 // High strain
+        } else if restingHeartRate > 0 && currentHeartRate > restingHeartRate * 1.2 {
+            score += 10 // Moderate strain
+        }
+        
+        // 3. Autonomic Nervous System Recovery (HRV)
+        // Values < 20ms typically indicate high stress/fatigue in most adults
+        if hrv > 0 && hrv < 20 { score += 35 }
+        else if hrv > 0 && hrv < 45 { score += 20 }
+        
+        // 4. Time of Day Effect (Circadian Rhythm)
+        let hour = Calendar.current.component(.hour, from: Date())
+        if (0...4).contains(hour) || (13...15).contains(hour) {
+            score += 10 // Natural circadian dips
+        }
+        
         fatigueScore = min(score, 100)
     }
 }

@@ -11,6 +11,7 @@ import Combine
 import Speech
 import AVFoundation
 import MapKit
+import SwiftData
 
 class VoiceManager: NSObject, ObservableObject {
     @Published var isListening = false
@@ -27,6 +28,7 @@ class VoiceManager: NSObject, ObservableObject {
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
     private let synthesizer = AVSpeechSynthesizer()
+    private var modelContext: ModelContext?
 
     // Both backends are held so switching is instant (no re-init overhead).
     private let appleService = AppleIntelligenceService()
@@ -35,12 +37,18 @@ class VoiceManager: NSObject, ObservableObject {
     // Route + HOS managers (lazy initialized to avoid circular deps)
     private lazy var hosManager = HOSManager()
     private lazy var routeManager = RouteManager()
+    private lazy var dvirManager = DVIRManager()
 
     override init() {
         super.init()
         synthesizer.delegate = self
         appleService.toolHandler = self
         claudeService.toolHandler = self
+    }
+
+    func configure(modelContext: ModelContext) {
+        self.modelContext = modelContext
+        self.hosManager.configure(with: modelContext)
     }
 
     /// The currently active AI backend, based on AppState preference.
@@ -347,10 +355,57 @@ extension VoiceManager: ClaudeToolHandler {
     }
 
     func handleLogExpense(amount: Double, category: String, note: String?) async -> String {
+        guard let context = modelContext else { return "Database unavailable. Expense not saved." }
+        
+        let expense = ExpenseEntry(
+            category: category,
+            amount: amount,
+            note: note ?? ""
+        )
+        context.insert(expense)
+        try? context.save()
+        
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         let formatted = formatter.string(from: NSNumber(value: amount)) ?? "$\(amount)"
         return "Logged \(category) expense of \(formatted)\(note.map { ": \($0)" } ?? "")."
+    }
+
+    func handleCalculateProfit(loadRevenue: Double, miles: Double) async -> String {
+        // Simple profit calculation using default or current trip metrics
+        let fixedCosts = 0.45 // placeholder
+        let avgFuelPrice = 4.50 // placeholder
+        let fuelEfficiency = 6.5 // mpg placeholder
+        
+        let estimatedFuelGallons = miles / fuelEfficiency
+        let fuelCost = estimatedFuelGallons * avgFuelPrice
+        let fixedExpenses = miles * fixedCosts
+        let totalExpenses = fuelCost + fixedExpenses
+        let profit = loadRevenue - totalExpenses
+        let profitPerMile = miles > 0 ? profit / miles : 0
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        let pFormatted = formatter.string(from: NSNumber(value: profit)) ?? "$\(profit)"
+        let ppmFormatted = formatter.string(from: NSNumber(value: profitPerMile)) ?? "$\(profitPerMile)"
+        
+        return """
+        Profit Analysis for \(Int(miles)) mile load:
+        - Estimated Fuel: $\(Int(fuelCost))
+        - Fixed Expenses: $\(Int(fixedExpenses))
+        - Total Expenses: $\(Int(totalExpenses))
+        - True Profit: \(pFormatted)
+        - Profit per mile: \(ppmFormatted)
+        """
+    }
+
+    func handleStartInspection() async -> String {
+        return dvirManager.startInspection()
+    }
+    
+    func handleContinueInspection() async -> String {
+        let lastUserMessage = driverState?.conversationHistory.last { $0.role == "user" }?.content ?? ""
+        return dvirManager.processResponse(lastUserMessage)
     }
 
     func handleContactCustomer(loadNumber: String, message: String, channel: String) async -> String {

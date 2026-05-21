@@ -25,61 +25,98 @@ struct DocumentView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Category filter chips
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        filterChip("All", isSelected: selectedCategory == nil) {
-                            selectedCategory = nil
-                        }
-                        ForEach(DriverDocument.DocumentCategory.allCases, id: \.self) { cat in
-                            filterChip(cat.rawValue, isSelected: selectedCategory == cat) {
-                                selectedCategory = selectedCategory == cat ? nil : cat
-                            }
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Category filter chips
+                    categoryFilter
+                        .padding(.vertical, 12)
+
+                    List {
+                        ForEach(filteredDocs) { doc in
+                            documentRow(doc)
+                                .listRowBackground(Color.white.opacity(0.05))
+                                .listRowSeparatorTint(Color.white.opacity(0.1))
                         }
                     }
-                    .padding(.horizontal)
+                    .listStyle(.plain)
+                    .searchable(text: $searchText, prompt: "Search documents")
                 }
-                .padding(.vertical, 8)
-
-                List(filteredDocs) { doc in
-                    documentRow(doc)
-                }
-                .listStyle(.insetGrouped)
-                .searchable(text: $searchText, prompt: "Search documents")
             }
             .navigationTitle("Documents")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { /* Integrate VisionKit/Camera here */ }) {
+                        Image(systemName: "doc.viewfinder.fill")
+                            .foregroundColor(Theme.primary)
+                    }
+                }
+            }
+        }
+        .colorScheme(.dark)
+    }
+
+    private var categoryFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                filterChip("All", isSelected: selectedCategory == nil) {
+                    selectedCategory = nil
+                }
+                ForEach(DriverDocument.DocumentCategory.allCases, id: \.self) { cat in
+                    filterChip(cat.rawValue, isSelected: selectedCategory == cat) {
+                        selectedCategory = selectedCategory == cat ? nil : cat
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
     }
 
     private func documentRow(_ doc: DriverDocument) -> some View {
-        HStack {
-            Image(systemName: doc.category.icon)
-                .foregroundColor(.blue)
-                .frame(width: 30)
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Theme.primary.opacity(0.1))
+                    .frame(width: 40, height: 40)
+                Image(systemName: doc.category.icon)
+                    .foregroundColor(Theme.primary)
+                    .font(.system(size: 16, weight: .bold))
+            }
+            
             VStack(alignment: .leading, spacing: 2) {
-                Text(doc.name).fontWeight(.medium)
-                Text(doc.category.rawValue).font(.caption).foregroundColor(.secondary)
+                Text(doc.name)
+                    .font(Theme.Typography.body())
+                    .fontWeight(.bold)
+                Text(doc.category.rawValue)
+                    .font(Theme.Typography.caption())
+                    .foregroundColor(Theme.textSecondary)
             }
             Spacer()
-            // Share the document name as text (full PDF delivery via CloudKit future phase)
+            
             ShareLink(item: doc.name) {
-                Image(systemName: "square.and.arrow.up").foregroundColor(.blue)
+                Image(systemName: "square.and.arrow.up")
+                    .foregroundColor(Theme.textSecondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
     }
 
     private func filterChip(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.caption)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(isSelected ? Color.blue : Color.secondary.opacity(0.2))
-                .cornerRadius(16)
+                .font(Theme.Typography.caption())
+                .fontWeight(isSelected ? .bold : .medium)
+                .foregroundColor(isSelected ? .white : Theme.textSecondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(isSelected ? Theme.primary : Color.white.opacity(0.1))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.1), lineWidth: 1)
+                )
         }
     }
 }

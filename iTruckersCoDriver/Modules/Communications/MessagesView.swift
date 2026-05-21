@@ -35,33 +35,41 @@ struct MessagesView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                Picker("Section", selection: $selectedTab) {
-                    Text("Dispatch").tag(0)
-                    Text("Contacts").tag(1)
-                    Text("Comm Log").tag(2)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal).padding(.top, 8)
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    Picker("Section", selection: $selectedTab) {
+                        Text("Dispatch").tag(0)
+                        Text("Contacts").tag(1)
+                        Text("Log").tag(2)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
 
-                switch selectedTab {
-                case 0: dispatchTab
-                case 1: contactsTab
-                default: commLogTab
+                    switch selectedTab {
+                    case 0: dispatchTab
+                    case 1: contactsTab
+                    default: commLogTab
+                    }
                 }
             }
-            .navigationTitle("Dispatch")
+            .navigationTitle("Communications")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button("Sample Message", systemImage: "plus") { addSampleDispatchMessage() }
                         Button("Add Contact", systemImage: "person.badge.plus") { showAddContact = true }
-                    } label: { Image(systemName: "ellipsis.circle") }
+                    } label: { 
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(Theme.primary)
+                    }
                 }
             }
             .sheet(isPresented: $showAddContact) { AddDeliveryContactView() }
         }
+        .colorScheme(.dark)
         .onAppear { updateUnreadCount() }
     }
 
@@ -71,7 +79,7 @@ struct MessagesView: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 16) {
                         if messages.isEmpty { emptyDispatchView }
                         ForEach(messages) { message in
                             messageBubble(message)
@@ -89,24 +97,35 @@ struct MessagesView: View {
                 }
                 .onChange(of: messages.count) {
                     if let last = messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        withAnimation(.spring()) { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
             }
-            Divider()
-            HStack(spacing: 10) {
-                TextField("Message dispatch...", text: $newMessageText, axis: .vertical)
-                    .lineLimit(1...4).padding(10)
-                    .background(Color(uiColor: .secondarySystemBackground))
-                    .cornerRadius(20).focused($isInputFocused)
-                Button { sendMessage() } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(newMessageText.isEmpty ? .gray : .blue)
+            
+            // Premium input area
+            VStack(spacing: 0) {
+                Divider().background(Color.white.opacity(0.1))
+                HStack(spacing: 12) {
+                    TextField("Message dispatch...", text: $newMessageText, axis: .vertical)
+                        .font(Theme.Typography.body(14))
+                        .padding(12)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(20)
+                        .focused($isInputFocused)
+                    
+                    Button { sendMessage() } label: {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(newMessageText.isEmpty ? .gray : .white)
+                            .frame(width: 44, height: 44)
+                            .background(newMessageText.isEmpty ? AnyShapeStyle(Color.white.opacity(0.1)) : AnyShapeStyle(Theme.primaryGradient))
+                            .clipShape(Circle())
+                    }
+                    .disabled(newMessageText.isEmpty)
                 }
-                .disabled(newMessageText.isEmpty)
+                .padding()
+                .background(.ultraThinMaterial)
             }
-            .padding()
         }
     }
 
@@ -115,50 +134,56 @@ struct MessagesView: View {
     private var contactsTab: some View {
         Group {
             if myContacts.isEmpty {
-                ContentUnavailableView(
-                    "No Contacts",
-                    systemImage: "person.2",
-                    description: Text("Add delivery contacts for quick ETA updates and communication logs.")
-                )
+                emptyStateView(title: "No Contacts", subtitle: "Add delivery contacts for quick ETA updates.", icon: "person.2.fill")
             } else {
                 List(myContacts) { contact in
                     contactRow(contact)
+                        .listRowBackground(Color.white.opacity(0.05))
+                        .listRowSeparatorTint(Color.white.opacity(0.1))
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
             }
         }
     }
 
     private func contactRow(_ contact: DeliveryContact) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(contact.contactName).fontWeight(.semibold)
-                    if !contact.company.isEmpty {
-                        Text(contact.company).font(.caption).foregroundColor(.secondary)
-                    }
-                }
-                Spacer()
-                if !contact.associatedLoadNumber.isEmpty {
-                    Text(contact.associatedLoadNumber)
-                        .font(.caption2).padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.15)).cornerRadius(4)
-                }
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(Theme.primary.opacity(0.1))
+                    .frame(width: 44, height: 44)
+                Text(String(contact.contactName.prefix(1)).uppercased())
+                    .font(Theme.Typography.body(18))
+                    .fontWeight(.bold)
+                    .foregroundColor(Theme.primary)
             }
-            HStack(spacing: 16) {
-                if !contact.phone.isEmpty {
-                    Link(destination: URL(string: "tel:\(contact.phone.filter { $0.isNumber })")!) {
-                        Label(contact.phone, systemImage: "phone.fill").font(.caption)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(contact.contactName).font(Theme.Typography.body()).fontWeight(.bold)
+                    if !contact.associatedLoadNumber.isEmpty {
+                        Text(contact.associatedLoadNumber)
+                            .font(Theme.Typography.caption(10))
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Theme.primary.opacity(0.2)).cornerRadius(6)
                     }
                 }
-                if !contact.email.isEmpty {
-                    Link(destination: URL(string: "mailto:\(contact.email)")!) {
-                        Label(contact.email, systemImage: "envelope.fill").font(.caption)
+                if !contact.company.isEmpty {
+                    Text(contact.company).font(Theme.Typography.caption()).foregroundColor(Theme.textSecondary)
+                }
+                
+                HStack(spacing: 16) {
+                    if !contact.phone.isEmpty {
+                        Link(destination: URL(string: "tel:\(contact.phone.filter { $0.isNumber })")!) {
+                            Label(contact.phone, systemImage: "phone.fill").font(Theme.Typography.caption())
+                        }
                     }
                 }
+                .foregroundColor(Theme.primary)
             }
+            Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Communication Log Tab
@@ -166,16 +191,14 @@ struct MessagesView: View {
     private var commLogTab: some View {
         Group {
             if myCommLogs.isEmpty {
-                ContentUnavailableView(
-                    "No Communications Logged",
-                    systemImage: "bubble.left.and.bubble.right",
-                    description: Text("Customer communications will appear here when logged via voice or manually.")
-                )
+                emptyStateView(title: "No Logs", subtitle: "Customer communications will appear here.", icon: "bubble.left.and.bubble.right.fill")
             } else {
                 List(myCommLogs) { log in
                     commLogRow(log)
+                        .listRowBackground(Color.white.opacity(0.05))
+                        .listRowSeparatorTint(Color.white.opacity(0.1))
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
             }
         }
     }
@@ -183,57 +206,70 @@ struct MessagesView: View {
     private func commLogRow(_ log: CommunicationLog) -> some View {
         HStack(spacing: 12) {
             Image(systemName: log.isOutbound ? "arrow.up.right" : "arrow.down.left")
-                .foregroundColor(log.isOutbound ? .blue : .green)
-                .frame(width: 20)
+                .foregroundColor(log.isOutbound ? Theme.primary : Theme.success)
+                .font(.system(size: 14, weight: .bold))
+            
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    Text(log.contactName).fontWeight(.medium)
+                    Text(log.contactName).font(Theme.Typography.body(14)).fontWeight(.bold)
                     if !log.loadNumber.isEmpty {
-                        Text("· \(log.loadNumber)").font(.caption).foregroundColor(.secondary)
+                        Text("· \(log.loadNumber)").font(Theme.Typography.caption()).foregroundColor(Theme.textSecondary)
                     }
                 }
-                Text(log.content).font(.caption).foregroundColor(.secondary).lineLimit(2)
+                Text(log.content).font(Theme.Typography.caption()).foregroundColor(Theme.textSecondary).lineLimit(2)
                 Text(log.timestamp.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption2).foregroundColor(.secondary)
+                    .font(Theme.Typography.caption(10)).foregroundColor(Theme.textSecondary)
             }
             Spacer()
             if log.confirmed {
-                Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.caption)
+                Image(systemName: "checkmark.circle.fill").foregroundColor(Theme.success).font(.caption)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Message bubble
 
     private func messageBubble(_ message: DispatchMessage) -> some View {
         HStack {
-            if message.isFromDriver { Spacer(minLength: 40) }
+            if message.isFromDriver { Spacer(minLength: 60) }
+            
             VStack(alignment: message.isFromDriver ? .trailing : .leading, spacing: 4) {
                 if !message.isFromDriver {
-                    Text("Dispatch").font(.caption2).foregroundColor(.secondary)
+                    Text("DISPATCH").font(Theme.Typography.caption(10)).kerning(1.0).foregroundColor(Theme.textSecondary)
+                        .padding(.leading, 4)
                 }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(message.content).font(.body)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(message.content).font(Theme.Typography.body())
+                    
                     if message.hasDeliveryInfo { deliveryInfoCard(message) }
+                    
                     Text(message.timestamp.formatted(date: .omitted, time: .shortened))
-                        .font(.caption2)
-                        .foregroundColor(message.isFromDriver ? .white.opacity(0.7) : .secondary)
+                        .font(Theme.Typography.caption(10))
+                        .foregroundColor(message.isFromDriver ? .white.opacity(0.6) : Theme.textSecondary)
                 }
-                .padding(12)
-                .background(message.isFromDriver ? Color.blue : Color(uiColor: .secondarySystemBackground))
-                .foregroundColor(message.isFromDriver ? .white : .primary)
-                .cornerRadius(16)
+                .padding(14)
+                .background(message.isFromDriver ? Theme.primary : Color.white.opacity(0.1))
+                .foregroundColor(.white)
+                .cornerRadius(18, corners: message.isFromDriver ? [.topLeft, .topRight, .bottomLeft] : [.topLeft, .topRight, .bottomRight])
             }
-            if !message.isFromDriver { Spacer(minLength: 40) }
+            
+            if !message.isFromDriver { Spacer(minLength: 60) }
         }
     }
 
     private func deliveryInfoCard(_ message: DispatchMessage) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             if !message.loadNumber.isEmpty {
-                Label(message.loadNumber, systemImage: "doc.text.fill").font(.caption)
+                HStack {
+                    Image(systemName: "shippingbox.fill")
+                    Text(message.loadNumber)
+                }
+                .font(Theme.Typography.caption())
+                .fontWeight(.bold)
             }
+            
             if !message.deliveryAddress.isEmpty {
                 Button {
                     let encoded = message.deliveryAddress.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
@@ -241,21 +277,39 @@ struct MessagesView: View {
                         UIApplication.shared.open(url)
                     }
                 } label: {
-                    Label(message.deliveryAddress, systemImage: "map.fill").font(.caption)
+                    HStack {
+                        Image(systemName: "map.fill")
+                        Text(message.deliveryAddress)
+                            .underline()
+                    }
+                    .font(Theme.Typography.caption())
+                    .foregroundColor(.white)
                 }
             }
         }
-        .padding(8).background(Color.white.opacity(0.2)).cornerRadius(8)
+        .padding(10)
+        .background(Color.black.opacity(0.2))
+        .cornerRadius(12)
     }
 
     private var emptyDispatchView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "message.fill").font(.system(size: 48)).foregroundColor(.gray)
-            Text("No messages yet").font(.headline).foregroundColor(.secondary)
-            Text("Messages from dispatch will appear here.")
-                .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
+        emptyStateView(title: "No Messages", subtitle: "Communication with dispatch will appear here.", icon: "tray.fill")
+    }
+    
+    private func emptyStateView(title: String, subtitle: String, icon: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 60))
+                .foregroundColor(Color.white.opacity(0.1))
+            Text(title)
+                .font(Theme.Typography.title(20))
+            Text(subtitle)
+                .font(Theme.Typography.body())
+                .foregroundColor(Theme.textSecondary)
+                .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity).padding(.top, 80)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 100)
     }
 
     // MARK: - Actions

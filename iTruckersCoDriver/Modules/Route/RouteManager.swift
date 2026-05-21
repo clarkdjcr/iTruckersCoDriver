@@ -216,7 +216,9 @@ class RouteManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private func isDangerousWeather(_ current: CurrentWeather) -> Bool {
         let windMPH = current.wind.speed.converted(to: .milesPerHour).value
         let visibility = current.visibility.converted(to: .miles).value
-        return windMPH > 50 || visibility < 0.25
+        // High-profile vehicles are sensitive to crosswinds
+        // 25mph: Warning, 40mph: Dangerous
+        return windMPH > 40 || (windMPH > 25 && visibility < 0.5) || visibility < 0.25
     }
     #endif
 
