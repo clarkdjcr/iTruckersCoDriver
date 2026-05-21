@@ -18,5 +18,7 @@
 	<string>Co-Driver reads heart rate, HRV, and sleep data to calculate a fatigue score and help keep you safe on the road.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Co-Driver may write health data to Apple Health as part of fatigue monitoring and driver wellness tracking.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Co-Driver may use Bluetooth through integrated SDKs or system frameworks. No Bluetooth data is collected or transmitted by this app.</string>
 </dict>
 </plist>
