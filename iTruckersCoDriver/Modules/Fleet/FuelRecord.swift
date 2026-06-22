@@ -39,3 +39,16 @@ final class FuelRecord {
 
     var totalCost: Double { gallons * pricePerGallon }
 }
+
+extension FuelRecord {
+    /// Rolling average MPG from the most recent fill-ups, newest first by date.
+    /// Mirrors the math in TelemetryManager.loadAvgMPG(); nil when there isn't enough data.
+    static func averageMPG(from records: [FuelRecord], sampleSize: Int = 10) -> Double? {
+        guard records.count >= 2 else { return nil }
+        let recent = Array(records.sorted { $0.date > $1.date }.prefix(sampleSize))
+        let totalGallons = recent.reduce(0) { $0 + $1.gallons }
+        let odometerSpan = recent.first!.odometer - recent.last!.odometer
+        guard totalGallons > 0 && odometerSpan > 0 else { return nil }
+        return odometerSpan / totalGallons
+    }
+}

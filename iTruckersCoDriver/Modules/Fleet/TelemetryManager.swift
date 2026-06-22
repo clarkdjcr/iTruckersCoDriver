@@ -107,13 +107,8 @@ class TelemetryManager: NSObject, ObservableObject {
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         let records = (try? context.fetch(descriptor)) ?? []
-        if records.count >= 2 {
-            let recent = Array(records.prefix(10))
-            let totalGallons = recent.reduce(0) { $0 + $1.gallons }
-            let odometerSpan = recent.first!.odometer - recent.last!.odometer
-            if totalGallons > 0 && odometerSpan > 0 {
-                avgMPG = odometerSpan / totalGallons
-            }
+        if let computed = FuelRecord.averageMPG(from: records) {
+            avgMPG = computed
         }
         recalculateRange()
     }

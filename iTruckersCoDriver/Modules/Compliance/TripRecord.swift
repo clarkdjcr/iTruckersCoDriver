@@ -91,3 +91,14 @@ final class TripRecord {
         }
     }
 }
+
+extension TripRecord {
+    /// Sums per-state IFTA mileage across trips. Mirrors ComplianceView's iftaView/exportIFTA.
+    static func aggregateStateMileage(_ trips: [TripRecord]) -> [String: Double] {
+        trips.reduce(into: [String: Double]()) { result, trip in
+            for (state, miles) in trip.stateMileage {
+                result[state, default: 0] += miles
+            }
+        }
+    }
+}

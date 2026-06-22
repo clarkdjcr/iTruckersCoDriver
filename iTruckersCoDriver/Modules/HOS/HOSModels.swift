@@ -49,3 +49,11 @@ final class ExpenseEntry {
         self.note = note
     }
 }
+
+extension ExpenseEntry {
+    /// Sums expense amounts grouped by category. Mirrors ComplianceView's expensesView breakdown.
+    static func totalsByCategory(_ expenses: [ExpenseEntry]) -> [String: Double] {
+        Dictionary(grouping: expenses, by: \.category)
+            .mapValues { $0.reduce(0) { $0 + $1.amount } }
+    }
+}

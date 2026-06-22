@@ -155,11 +155,7 @@ struct ComplianceView: View {
     // MARK: - IFTA view
 
     private var iftaView: some View {
-        let stateTotals = trips.reduce(into: [String: Double]()) { result, trip in
-            for (state, miles) in trip.stateMileage {
-                result[state, default: 0] += miles
-            }
-        }
+        let stateTotals = TripRecord.aggregateStateMileage(trips)
 
         return Group {
             if stateTotals.isEmpty {
@@ -186,7 +182,7 @@ struct ComplianceView: View {
 
     private var expensesView: some View {
         let allExpenses: [ExpenseEntry] = (try? modelContext.fetch(FetchDescriptor<ExpenseEntry>())) ?? []
-        let byCategory = Dictionary(grouping: allExpenses) { $0.category }
+        let categoryTotals = ExpenseEntry.totalsByCategory(allExpenses)
 
         return Group {
             if allExpenses.isEmpty {
@@ -194,11 +190,11 @@ struct ComplianceView: View {
             } else {
                 List {
                     Section("By Category") {
-                        ForEach(byCategory.sorted(by: { $0.key < $1.key }), id: \.key) { category, entries in
+                        ForEach(categoryTotals.sorted(by: { $0.key < $1.key }), id: \.key) { category, total in
                             HStack {
                                 Text(category.capitalized)
                                 Spacer()
-                                Text(formatCurrency(entries.reduce(0) { $0 + $1.amount }))
+                                Text(formatCurrency(total))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -241,9 +237,7 @@ struct ComplianceView: View {
 
     private func exportIFTA() {
         var csv = "State,Miles\n"
-        let stateTotals = trips.reduce(into: [String: Double]()) { result, trip in
-            for (state, miles) in trip.stateMileage { result[state, default: 0] += miles }
-        }
+        let stateTotals = TripRecord.aggregateStateMileage(trips)
         for (state, miles) in stateTotals.sorted(by: { $0.key < $1.key }) {
             csv += "\(state),\(String(format: "%.1f", miles))\n"
         }

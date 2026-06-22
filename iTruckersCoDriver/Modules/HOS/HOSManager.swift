@@ -122,8 +122,8 @@ class HOSManager: ObservableObject {
         while i >= 0 {
             let entry = sorted[i]
             if entry.dutyStatus == .offDuty || entry.dutyStatus == .sleeperBerth {
-                // Find when this off/sleeper period started
-                let periodStart = i > 0 ? sorted[i - 1].timestamp : sorted[i].timestamp - (10 * 3600)
+                // This entry's own timestamp marks when the off/sleeper period started.
+                let periodStart = sorted[i].timestamp
                 let periodEnd = i < sorted.count - 1 ? sorted[i + 1].timestamp : date
                 if periodEnd.timeIntervalSince(periodStart) >= (10 * 3600) {
                     return periodEnd
