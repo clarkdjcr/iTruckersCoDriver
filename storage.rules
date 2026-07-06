@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isTenantMember(tenantId) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+
+    function tenantRole(tenantId) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/tenants/$(tenantId)/members/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function isTenantAdmin(tenantId) {
+      return tenantRole(tenantId) in ['owner', 'admin'];
+    }
+
+    function fileSizeUnder(limitBytes) {
+      return request.resource != null && request.resource.size < limitBytes;
+    }
+
+    match /tenants/{tenantId}/{allPaths=**} {
+      allow read: if isTenantMember(tenantId);
+      allow write: if isTenantMember(tenantId) && fileSizeUnder(25 * 1024 * 1024);
+      allow delete: if isTenantAdmin(tenantId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
