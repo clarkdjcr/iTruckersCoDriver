@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function tenantRole(tenantId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function isTenantMember(tenantId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid));
+    }
+
+    function isTenantAdmin(tenantId) {
+      return tenantRole(tenantId) in ['owner', 'admin'];
+    }
+
+    function isDispatcherOrAdmin(tenantId) {
+      return tenantRole(tenantId) in ['owner', 'admin', 'dispatcher'];
+    }
+
+    function isDriverSelf(driverId) {
+      return signedIn() && request.auth.uid == driverId;
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if isTenantMember(tenantId);
+      allow create, update, delete: if isTenantAdmin(tenantId);
+
+      match /members/{memberId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update, delete: if isTenantAdmin(tenantId);
+      }
+
+      match /drivers/{driverId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update, delete: if isTenantAdmin(tenantId) || isDriverSelf(driverId);
+      }
+
+      match /vehicles/{vehicleId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update, delete: if isTenantAdmin(tenantId);
+      }
+
+      match /dispatchMessages/{messageId} {
+        allow read: if isTenantMember(tenantId);
+        allow create: if isTenantMember(tenantId);
+        allow update: if isDispatcherOrAdmin(tenantId);
+        allow delete: if isTenantAdmin(tenantId);
+      }
+
+      match /trips/{tripId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update: if isTenantMember(tenantId);
+        allow delete: if isTenantAdmin(tenantId);
+      }
+
+      match /maintenanceReports/{reportId} {
+        allow read: if isTenantMember(tenantId);
+        allow create: if isTenantMember(tenantId);
+        allow update: if isDispatcherOrAdmin(tenantId);
+        allow delete: if isTenantAdmin(tenantId);
+      }
+
+      match /documents/{documentId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update: if isTenantMember(tenantId);
+        allow delete: if isTenantAdmin(tenantId);
+      }
+
+      match /settings/{settingId} {
+        allow read: if isTenantMember(tenantId);
+        allow create, update, delete: if isTenantAdmin(tenantId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
