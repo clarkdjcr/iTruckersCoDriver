@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		92B8D9CE2FFDE09F000E9004 /* LoadShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		924504642F5CF14E00004415 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +25,35 @@
 			remoteGlobalIDString = 924504532F5CF14C00004415;
 			remoteInfo = iTruckersCoDriver;
 		};
+		92B8D9CC2FFDE09F000E9004 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9245044C2F5CF14C00004415 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 92B8D9C32FFDE09F000E9004;
+			remoteInfo = LoadShareExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		92B8D9D32FFDE09F000E9004 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				92B8D9CE2FFDE09F000E9004 /* LoadShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		924504542F5CF14C00004415 /* iTruckersCoDriver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTruckersCoDriver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		924504632F5CF14E00004415 /* iTruckersCoDriverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTruckersCoDriverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9245046D2F5CF14E00004415 /* iTruckersCoDriverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTruckersCoDriverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LoadShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		92B8D9E02FFDEF4C000E9004 /* LoadShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = LoadShareExtension.entitlements; path = LoadShareExtension/LoadShareExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -37,6 +64,20 @@
 			);
 			target = 924504532F5CF14C00004415 /* iTruckersCoDriver */;
 		};
+		926D53542FFDF73500D35FA4 /* Exceptions for "iTruckersCoDriver" folder in "LoadShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/PendingLoadImportStore.swift,
+			);
+			target = 92B8D9C32FFDE09F000E9004 /* LoadShareExtension */;
+		};
+		926D53552FFDF81600D35FA4 /* Exceptions for "LoadShareExtension" folder in "LoadShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 92B8D9C32FFDE09F000E9004 /* LoadShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,6 +85,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9245048B2F5D05E600004415 /* Exceptions for "iTruckersCoDriver" folder in "iTruckersCoDriver" target */,
+				926D53542FFDF73500D35FA4 /* Exceptions for "iTruckersCoDriver" folder in "LoadShareExtension" target */,
 			);
 			path = iTruckersCoDriver;
 			sourceTree = "<group>";
@@ -56,6 +98,14 @@
 		924504702F5CF14E00004415 /* iTruckersCoDriverUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = iTruckersCoDriverUITests;
+			sourceTree = "<group>";
+		};
+		926D534E2FFDF60A00D35FA4 /* LoadShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				926D53552FFDF81600D35FA4 /* Exceptions for "LoadShareExtension" folder in "LoadShareExtension" target */,
+			);
+			path = LoadShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -82,15 +132,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		92B8D9C12FFDE09F000E9004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		9245044B2F5CF14C00004415 = {
 			isa = PBXGroup;
 			children = (
+				92B8D9E02FFDEF4C000E9004 /* LoadShareExtension.entitlements */,
 				924504562F5CF14C00004415 /* iTruckersCoDriver */,
 				924504662F5CF14E00004415 /* iTruckersCoDriverTests */,
 				924504702F5CF14E00004415 /* iTruckersCoDriverUITests */,
+				926D534E2FFDF60A00D35FA4 /* LoadShareExtension */,
 				924504552F5CF14C00004415 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +160,7 @@
 				924504542F5CF14C00004415 /* iTruckersCoDriver.app */,
 				924504632F5CF14E00004415 /* iTruckersCoDriverTests.xctest */,
 				9245046D2F5CF14E00004415 /* iTruckersCoDriverUITests.xctest */,
+				92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,10 +175,12 @@
 				924504502F5CF14C00004415 /* Sources */,
 				924504512F5CF14C00004415 /* Frameworks */,
 				924504522F5CF14C00004415 /* Resources */,
+				92B8D9D32FFDE09F000E9004 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				92B8D9CD2FFDE09F000E9004 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				924504562F5CF14C00004415 /* iTruckersCoDriver */,
@@ -176,6 +238,28 @@
 			productReference = 9245046D2F5CF14E00004415 /* iTruckersCoDriverUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		92B8D9C32FFDE09F000E9004 /* LoadShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92B8D9CF2FFDE09F000E9004 /* Build configuration list for PBXNativeTarget "LoadShareExtension" */;
+			buildPhases = (
+				92B8D9C02FFDE09F000E9004 /* Sources */,
+				92B8D9C12FFDE09F000E9004 /* Frameworks */,
+				92B8D9C22FFDE09F000E9004 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				926D534E2FFDF60A00D35FA4 /* LoadShareExtension */,
+			);
+			name = LoadShareExtension;
+			packageProductDependencies = (
+			);
+			productName = LoadShareExtension;
+			productReference = 92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -183,7 +267,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					924504532F5CF14C00004415 = {
@@ -214,6 +298,9 @@
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = 924504532F5CF14C00004415;
 					};
+					92B8D9C32FFDE09F000E9004 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 9245044F2F5CF14C00004415 /* Build configuration list for PBXProject "iTruckersCoDriver" */;
@@ -233,6 +320,7 @@
 				924504532F5CF14C00004415 /* iTruckersCoDriver */,
 				924504622F5CF14E00004415 /* iTruckersCoDriverTests */,
 				9245046C2F5CF14E00004415 /* iTruckersCoDriverUITests */,
+				92B8D9C32FFDE09F000E9004 /* LoadShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -253,6 +341,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9245046B2F5CF14E00004415 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92B8D9C22FFDE09F000E9004 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -283,6 +378,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		92B8D9C02FFDE09F000E9004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -295,6 +397,11 @@
 			isa = PBXTargetDependency;
 			target = 924504532F5CF14C00004415 /* iTruckersCoDriver */;
 			targetProxy = 9245046E2F5CF14E00004415 /* PBXContainerItemProxy */;
+		};
+		92B8D9CD2FFDE09F000E9004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 92B8D9C32FFDE09F000E9004 /* LoadShareExtension */;
+			targetProxy = 92B8D9CC2FFDE09F000E9004 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -655,6 +762,71 @@
 			};
 			name = Release;
 		};
+		92B8D9D02FFDE09F000E9004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LoadShareExtension/LoadShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 965RA266P3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LoadShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LoadShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver.LoadShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		92B8D9D12FFDE09F000E9004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LoadShareExtension/LoadShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 965RA266P3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LoadShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LoadShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver.LoadShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -690,6 +862,15 @@
 			buildConfigurations = (
 				9245047E2F5CF14E00004415 /* Debug */,
 				9245047F2F5CF14E00004415 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		92B8D9CF2FFDE09F000E9004 /* Build configuration list for PBXNativeTarget "LoadShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92B8D9D02FFDE09F000E9004 /* Debug */,
+				92B8D9D12FFDE09F000E9004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

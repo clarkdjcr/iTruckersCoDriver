@@ -16,6 +16,7 @@ struct DispatcherDashboardView: View {
     @Query private var trips: [TripRecord]
     @Query(sort: \CommunicationLog.timestamp, order: .reverse) private var commLogs: [CommunicationLog]
     @Query(sort: \MaintenanceReport.timestamp, order: .reverse) private var maintReports: [MaintenanceReport]
+    @Query private var loadOpportunities: [LoadOpportunity]
 
     @State private var selectedSidebar: SidebarItem? = .fleet
     @State private var selectedDriverProfile: DriverProfile?
@@ -26,6 +27,7 @@ struct DispatcherDashboardView: View {
         case messages = "Messages"
         case communications = "Communications"
         case loads = "Loads"
+        case profit = "Profit"
         case compliance = "Compliance"
         case maintenance = "Maintenance"
 
@@ -36,6 +38,7 @@ struct DispatcherDashboardView: View {
             case .messages:       return "message.fill"
             case .communications: return "phone.bubble.fill"
             case .loads:          return "shippingbox.fill"
+            case .profit:         return "dollarsign.arrow.circlepath"
             case .compliance:     return "doc.badge.checkmark"
             case .maintenance:    return "wrench.and.screwdriver.fill"
             }
@@ -70,6 +73,7 @@ struct DispatcherDashboardView: View {
         switch item {
         case .messages:    return allMessages.filter { !$0.isRead && $0.isFromDriver }.count
         case .maintenance: return maintReports.filter(\.isUrgent).count
+        case .profit:      return loadOpportunities.filter { $0.needsBetterRate }.count
         default:           return 0
         }
     }
@@ -83,6 +87,7 @@ struct DispatcherDashboardView: View {
         case .messages:       messagesView
         case .communications: communicationsView
         case .loads:          loadsView
+        case .profit:         ProfitPlannerView()
         case .compliance:     complianceDetailView
         case .maintenance:    MaintenanceDashboardView()
         case nil:             fleetView

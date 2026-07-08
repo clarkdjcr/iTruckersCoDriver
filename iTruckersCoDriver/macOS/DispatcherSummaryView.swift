@@ -17,6 +17,7 @@ struct DispatcherSummaryView: View {
     @Query(sort: \DispatchMessage.timestamp, order: .reverse) private var allMessages: [DispatchMessage]
     @Query(sort: \MaintenanceReport.timestamp, order: .reverse) private var reports: [MaintenanceReport]
     @Query private var trips: [TripRecord]
+    @Query(sort: \LoadOpportunity.updatedAt, order: .reverse) private var loadOpportunities: [LoadOpportunity]
 
     @State private var selectedDriver: DriverProfile?
     @State private var replyText = ""
@@ -30,6 +31,9 @@ struct DispatcherSummaryView: View {
     }
     private var activeTrips: [TripRecord] {
         trips.filter(\.isActive)
+    }
+    private var underpricedLoads: [LoadOpportunity] {
+        loadOpportunities.filter { $0.needsBetterRate }
     }
     private var alertDrivers: [DriverProfile] {
         drivers.filter { $0.hasFatigueAlert || ($0.fuelLevel > 0 && $0.fuelLevel < 20) }
@@ -54,6 +58,10 @@ struct DispatcherSummaryView: View {
                 // Active loads
                 if !activeTrips.isEmpty {
                     loadsSection
+                }
+
+                if !loadOpportunities.isEmpty {
+                    profitSection
                 }
             }
             .listStyle(.insetGrouped)
@@ -216,6 +224,35 @@ struct DispatcherSummaryView: View {
         }
     }
 
+    private var profitSection: some View {
+        Section {
+            ForEach(loadOpportunities.prefix(5)) { opportunity in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(opportunity.loadNumber.isEmpty ? loadRoute(opportunity) : opportunity.loadNumber)
+                            .fontWeight(.medium)
+                        Spacer()
+                        Text(String(format: "$%.2f/mi", opportunity.profitPerMile))
+                            .font(.caption)
+                            .foregroundColor(opportunity.needsBetterRate ? .orange : .green)
+                    }
+                    if opportunity.needsBetterRate {
+                        Text("Ask at least \(formatCurrency(opportunity.minimumLinehaulRate)) linehaul")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("Projected profit \(formatCurrency(opportunity.projectedProfit))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        } header: {
+            Label("\(underpricedLoads.count) Rate Alert\(underpricedLoads.count == 1 ? "" : "s")",
+                  systemImage: "dollarsign.arrow.circlepath")
+        }
+    }
+
     // MARK: - Helpers
 
     private func statusColor(_ status: DutyStatus) -> Color {
@@ -231,6 +268,17 @@ struct DispatcherSummaryView: View {
         let h = Int(interval) / 3600
         let m = (Int(interval) % 3600) / 60
         return String(format: "%dh %02dm", h, m)
+    }
+
+    private func loadRoute(_ opportunity: LoadOpportunity) -> String {
+        if opportunity.origin.isEmpty && opportunity.destination.isEmpty {
+            return "Load plan"
+        }
+        return "\(opportunity.origin.isEmpty ? "Origin TBD" : opportunity.origin) -> \(opportunity.destination.isEmpty ? "Destination TBD" : opportunity.destination)"
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        value.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))
     }
 }
 

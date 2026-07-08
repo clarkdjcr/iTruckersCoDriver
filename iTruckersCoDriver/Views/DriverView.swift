@@ -16,12 +16,16 @@ struct DriverView: View {
     @StateObject private var voiceManager = VoiceManager()
     @StateObject private var telemetryManager = TelemetryManager()
     @State private var selectedTab = 0
+    @Environment(\.scenePhase) private var scenePhase
 
     // Overdue maintenance count for badge
     @Query private var allMaintenanceItems: [MaintenanceItem]
     private var overdueCount: Int {
         allMaintenanceItems.filter { $0.driverID == appState.driverID && $0.isActive && $0.isOverdue }.count
     }
+
+    // Loads shared in via the Share Extension, waiting to be reviewed
+    @State private var pendingLoadImportCount = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -51,17 +55,22 @@ struct DriverView: View {
                 .badge(overdueCount > 0 ? "\(overdueCount)" : nil)
                 .tag(5)
 
+            ProfitPlannerView()
+                .tabItem { Label("Profit", systemImage: "dollarsign.arrow.circlepath") }
+                .badge(pendingLoadImportCount > 0 ? "\(pendingLoadImportCount)" : nil)
+                .tag(6)
+
             HealthView()
                 .tabItem { Label("Health", systemImage: "heart.fill") }
-                .tag(6)
+                .tag(7)
 
             DocumentView()
                 .tabItem { Label("Documents", systemImage: "folder.fill") }
-                .tag(7)
+                .tag(8)
 
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
-                .tag(8)
+                .tag(9)
         }
         .tint(.blue)
         .onAppear {
@@ -74,11 +83,19 @@ struct DriverView: View {
                 voiceManager.speak("You've entered \(state). Miles logged for IFTA.")
             }
             syncDriverProfile()
+            refreshPendingLoadImportCount()
         }
         .onChange(of: driverState.currentDutyStatus) { syncDriverProfile() }
         .onChange(of: driverState.hosRemaining.driveTimeRemaining) { syncDriverProfile() }
         .onChange(of: driverState.fuelLevel) { syncDriverProfile() }
         .onChange(of: driverState.currentSpeedMPH) { syncDriverProfile() }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { refreshPendingLoadImportCount() }
+        }
+    }
+
+    private func refreshPendingLoadImportCount() {
+        pendingLoadImportCount = PendingLoadImportStore.pending().count
     }
 
     // MARK: - CloudKit profile sync

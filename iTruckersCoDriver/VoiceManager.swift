@@ -13,6 +13,21 @@ import AVFoundation
 import MapKit
 import SwiftData
 
+/// Errors surfaced by the on-device speech pipeline.
+private enum VoiceError: LocalizedError {
+    case localeUnsupported
+    case noMicrophone
+    case notReady
+
+    var errorDescription: String? {
+        switch self {
+        case .localeUnsupported: return "This language isn't supported for on-device transcription."
+        case .noMicrophone: return "No microphone is available."
+        case .notReady: return "The voice recognizer isn't ready yet."
+        }
+    }
+}
+
 class VoiceManager: NSObject, ObservableObject {
     @Published var isListening = false
     @Published var recognizedText = ""
@@ -23,10 +38,13 @@ class VoiceManager: NSObject, ObservableObject {
     weak var appState: AppState?       // for API key + active backend selection
     weak var driverState: DriverState? // for conversation, HOS, duty status
 
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask: SFSpeechRecognitionTask?
-    private let audioEngine = AVAudioEngine()
+    // Live speech-to-text via the on-device SpeechAnalyzer pipeline (iOS 26+).
+    private var analyzer: SpeechAnalyzer?
+    private var transcriber: SpeechTranscriber?
+    private var inputProvider: CaptureInputSequenceProvider?
+    private var recognizerTask: Task<Void, Never>?
+    private var finalizedTranscript = ""
+    private var volatileTranscript = ""
     private let synthesizer = AVSpeechSynthesizer()
     private var modelContext: ModelContext?
 
@@ -102,74 +120,120 @@ class VoiceManager: NSObject, ObservableObject {
     }
 
     func startListening() {
-        guard permissionsGranted, !audioEngine.isRunning else { return }
-        recognitionTask?.cancel()
-        recognitionTask = nil
+        guard permissionsGranted, recognizerTask == nil else { return }
         recognizedText = ""
+        finalizedTranscript = ""
+        volatileTranscript = ""
+        statusMessage = "Starting..."
 
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            statusMessage = "Audio session error"
-            return
-        }
-
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        guard let recognitionRequest else { return }
-        recognitionRequest.shouldReportPartialResults = true
-
-        let inputNode = audioEngine.inputNode
-        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            guard let self else { return }
-            var isFinal = false
-            if let result {
-                let text = result.bestTranscription.formattedString
-                isFinal = result.isFinal
-                DispatchQueue.main.async { self.recognizedText = text }
-            }
-            if error != nil || isFinal {
-                self.audioEngine.stop()
-                inputNode.removeTap(onBus: 0)
-                self.recognitionRequest = nil
-                self.recognitionTask = nil
+        recognizerTask = Task {
+            do {
+                try await self.runTranscription()
+            } catch is CancellationError {
+                // Expected when the session is torn down; ignore.
+            } catch {
                 DispatchQueue.main.async {
+                    self.statusMessage = "Voice error: \(error.localizedDescription)"
                     self.isListening = false
-                    self.statusMessage = "Processing..."
-                    if isFinal { self.processWithClaude(self.recognizedText) }
                 }
+                await self.teardownTranscription()
+                self.recognizerTask = nil
             }
-        }
-
-        let format = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-        }
-
-        do {
-            audioEngine.prepare()
-            try audioEngine.start()
-            DispatchQueue.main.async {
-                self.isListening = true
-                self.statusMessage = "Listening..."
-            }
-        } catch {
-            statusMessage = "Failed to start listening"
         }
     }
 
+    /// Sets up the transcriber + analyzer, streams microphone audio through the
+    /// on-device SpeechAnalyzer, and forwards the final transcript to the AI once
+    /// the driver taps to stop.
+    private func runTranscription() async throws {
+        try await prepareTranscriber()
+        guard let transcriber = self.transcriber else { throw VoiceError.notReady }
+
+        guard let device = AVCaptureDevice.default(for: .audio) else {
+            throw VoiceError.noMicrophone
+        }
+
+        // providerWithSession builds its own AVCaptureSession and, on iOS,
+        // configures the app's shared AVAudioSession for capture automatically.
+        let provider = try await CaptureInputSequenceProvider.providerWithSession(
+            from: device,
+            compatibleWith: [transcriber]
+        )
+        self.inputProvider = provider
+
+        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        self.analyzer = analyzer
+
+        provider.captureSession.startRunning()
+        try await analyzer.start(inputSequence: provider.analyzerInputs)
+
+        DispatchQueue.main.async {
+            self.isListening = true
+            self.statusMessage = "Listening… tap to send"
+        }
+
+        for try await result in transcriber.results {
+            let text = String(result.text.characters)
+            if result.isFinal {
+                finalizedTranscript += text
+            } else {
+                volatileTranscript = text
+            }
+            let combined = finalizedTranscript + volatileTranscript
+            DispatchQueue.main.async { self.recognizedText = combined }
+        }
+
+        // The result stream ends once stopListening() finalizes the analysis.
+        let transcript = (finalizedTranscript.isEmpty ? volatileTranscript : finalizedTranscript)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        await teardownTranscription()
+        DispatchQueue.main.async {
+            self.recognizerTask = nil
+            self.processWithClaude(transcript)
+        }
+    }
+
+    /// Lazily builds the transcriber and ensures its on-device model assets are installed.
+    private func prepareTranscriber() async throws {
+        guard transcriber == nil else { return }
+
+        guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-US")) else {
+            throw VoiceError.localeUnsupported
+        }
+
+        let transcriber = SpeechTranscriber(locale: locale, preset: .progressiveTranscription)
+
+        if let installationRequest = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+            DispatchQueue.main.async { self.statusMessage = "Preparing voice model…" }
+            try await installationRequest.downloadAndInstall()
+        }
+
+        self.transcriber = transcriber
+    }
+
     func stopListening() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        recognitionTask?.cancel()
-        recognitionRequest = nil
-        recognitionTask = nil
+        guard isListening else { return }
         DispatchQueue.main.async {
             self.isListening = false
-            self.statusMessage = "Tap the mic to speak"
+            self.statusMessage = "Processing..."
         }
+
+        let analyzer = self.analyzer
+        let provider = self.inputProvider
+        Task {
+            provider?.captureSession.stopRunning()
+            // Emit final results for the audio already captured, then end the streams.
+            try? await analyzer?.finalize(through: nil)
+            await analyzer?.cancelAndFinishNow()
+        }
+    }
+
+    /// Tears down the capture session and analyzer so the next session starts clean.
+    private func teardownTranscription() async {
+        inputProvider?.captureSession.stopRunning()
+        inputProvider = nil
+        analyzer = nil
+        transcriber = nil
     }
 
     // MARK: - AI processing
@@ -204,8 +268,7 @@ class VoiceManager: NSObject, ObservableObject {
                 let fullResponse = try await service.sendMessage(
                     text,
                     history: Array(driver.conversationHistory.dropLast()),
-                    onPartialResponse: { [weak self] chunk in
-                        guard let self else { return }
+                    onPartialResponse: { chunk in
                         sentenceBuffer += chunk
                         if let sentenceEnd = self.findSentenceEnd(in: sentenceBuffer) {
                             let sentence = String(sentenceBuffer[...sentenceEnd])

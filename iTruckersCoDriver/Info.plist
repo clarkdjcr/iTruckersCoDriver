@@ -20,5 +20,9 @@
 	<string>Co-Driver may write health data to Apple Health as part of fatigue monitoring and driver wellness tracking.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Co-Driver may use Bluetooth through integrated SDKs or system frameworks. No Bluetooth data is collected or transmitted by this app.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Co-Driver uses the camera to scan fuel receipts and rate confirmations so it can auto-fill your logs and load plans.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Co-Driver reads photos you choose so it can scan fuel receipts and rate confirmations and auto-fill your logs and load plans.</string>
 </dict>
 </plist>
