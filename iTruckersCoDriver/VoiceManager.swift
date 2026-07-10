@@ -35,7 +35,7 @@ class VoiceManager: NSObject, ObservableObject {
     @Published var permissionsGranted = false
 
     // Set by DriverView
-    weak var appState: AppState?       // for API key + active backend selection
+    weak var appState: AppState?       // for driver profile + AI availability
     weak var driverState: DriverState? // for conversation, HOS, duty status
 
     // Live speech-to-text via the on-device SpeechAnalyzer pipeline (iOS 26+).
@@ -48,9 +48,8 @@ class VoiceManager: NSObject, ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
     private var modelContext: ModelContext?
 
-    // Both backends are held so switching is instant (no re-init overhead).
+    // On-device Apple Intelligence is the only AI backend.
     private let appleService = AppleIntelligenceService()
-    private let claudeService = ClaudeService()
 
     // Route + HOS managers (lazy initialized to avoid circular deps)
     private lazy var hosManager = HOSManager()
@@ -61,7 +60,6 @@ class VoiceManager: NSObject, ObservableObject {
         super.init()
         synthesizer.delegate = self
         appleService.toolHandler = self
-        claudeService.toolHandler = self
     }
 
     func configure(modelContext: ModelContext) {
@@ -69,13 +67,8 @@ class VoiceManager: NSObject, ObservableObject {
         self.hosManager.configure(with: modelContext)
     }
 
-    /// The currently active AI backend, based on AppState preference.
-    private var activeService: any CoDriverAIService {
-        switch appState?.activeBackend ?? .claude {
-        case .appleIntelligence: return appleService
-        case .claude: return claudeService
-        }
-    }
+    /// The AI service powering Co-Driver (on-device Apple Intelligence).
+    private var activeService: any CoDriverAIService { appleService }
 
     // MARK: - Permissions
 
@@ -189,7 +182,7 @@ class VoiceManager: NSObject, ObservableObject {
         await teardownTranscription()
         DispatchQueue.main.async {
             self.recognizerTask = nil
-            self.processWithClaude(transcript)
+            self.processMessage(transcript)
         }
     }
 
@@ -238,22 +231,21 @@ class VoiceManager: NSObject, ObservableObject {
 
     // MARK: - AI processing
 
-    private func processWithClaude(_ text: String) {
+    /// Submit a typed/tapped command (e.g. a quick-command chip) through the AI
+    /// exactly as if the driver had spoken it. Ignored while already processing.
+    func submitTextCommand(_ text: String) {
+        guard !(driverState?.isProcessingAI ?? false) else { return }
+        if isListening { stopListening() }
+        processMessage(text)
+    }
+
+    private func processMessage(_ text: String) {
         guard !text.isEmpty else {
             DispatchQueue.main.async { self.statusMessage = "Tap the mic to speak" }
             return
         }
 
         guard let driver = driverState else { return }
-
-        // For Claude backend, validate and inject the API key before calling.
-        if appState?.activeBackend == .claude {
-            guard let apiKey = appState?.apiKey, !apiKey.isEmpty else {
-                speak("Please add your Claude API key in Settings to enable AI interaction.")
-                return
-            }
-            claudeService.apiKey = apiKey
-        }
 
         DispatchQueue.main.async {
             driver.addUserMessage(text)
@@ -292,12 +284,6 @@ class VoiceManager: NSObject, ObservableObject {
                     driver.isProcessingAI = false
                     self.statusMessage = "Apple Intelligence unavailable"
                     self.speak("Apple Intelligence isn't available right now. Add a Claude API key in Settings for full features.")
-                }
-            } catch AIServiceError.noAPIKey {
-                DispatchQueue.main.async {
-                    driver.isProcessingAI = false
-                    self.statusMessage = "No API key"
-                    self.speak("Please add your Claude API key in Settings to use the Claude backend.")
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -435,7 +421,8 @@ extension VoiceManager: ClaudeToolHandler {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         let formatted = formatter.string(from: NSNumber(value: amount)) ?? "$\(amount)"
-        return "Logged \(category) expense of \(formatted)\(note.map { ": \($0)" } ?? "")."
+        let bucketName = TaxBucket.resolve(category).displayName
+        return "Logged \(formatted) under \(bucketName)\(note.map { ": \($0)" } ?? "")."
     }
 
     func handleCalculateProfit(loadRevenue: Double, miles: Double) async -> String {

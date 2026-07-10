@@ -10,12 +10,16 @@ import SwiftData
 
 #if os(iOS)
 struct ComplianceView: View {
+    @EnvironmentObject var appState: AppState
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TripRecord.startDate, order: .reverse) private var trips: [TripRecord]
     @Query(sort: \HOSEntry.timestamp, order: .reverse) private var hosEntries: [HOSEntry]
+    @Query(sort: \ExpenseEntry.date, order: .reverse) private var expenses: [ExpenseEntry]
     @State private var showingNewTrip = false
-    @State private var showingExport = false
-    @State private var exportText = ""
+    @State private var showingAddExpense = false
+    @State private var exportItems: [Any] = []
+    @State private var showingFileShare = false
+    @State private var receiptToView: ReceiptImage?
     @State private var selectedTab = 0
 
     var body: some View {
@@ -40,9 +44,30 @@ struct ComplianceView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
+                        Button("Add Expense", systemImage: "plus.circle") { showingAddExpense = true }
                         Button("New Trip", systemImage: "plus") { showingNewTrip = true }
-                        Button("Export HOS Log", systemImage: "square.and.arrow.up") { exportHOS() }
-                        Button("Export IFTA", systemImage: "square.and.arrow.up") { exportIFTA() }
+
+                        Menu("Tax Report (PDF)") {
+                            ForEach(Quarter.recent(count: 5)) { q in
+                                Button(q.label) { exportTaxReportPDF(q) }
+                            }
+                        }
+                        Menu("Expenses (CSV)") {
+                            ForEach(Quarter.recent(count: 5)) { q in
+                                Button(q.label) { exportExpensesCSV(q) }
+                            }
+                        }
+
+                        Menu("IFTA Mileage (CSV)") {
+                            ForEach(Quarter.recent(count: 5)) { q in
+                                Button(q.label) { exportIFTA(q) }
+                            }
+                        }
+                        Menu("HOS Log (CSV)") {
+                            ForEach(Quarter.recent(count: 5)) { q in
+                                Button(q.label) { exportHOS(q) }
+                            }
+                        }
                         NavigationLink(destination: DocumentView()) {
                             Label("Forms & Documents", systemImage: "folder.fill")
                         }
@@ -52,8 +77,12 @@ struct ComplianceView: View {
                 }
             }
             .sheet(isPresented: $showingNewTrip) { NewTripView() }
-            .sheet(isPresented: $showingExport) {
-                ShareSheet(text: exportText)
+            .sheet(isPresented: $showingAddExpense) { AddExpenseView() }
+            .sheet(isPresented: $showingFileShare) {
+                ShareSheet(items: exportItems)
+            }
+            .sheet(item: $receiptToView) { item in
+                ReceiptViewer(image: item.image)
             }
         }
     }
@@ -181,35 +210,47 @@ struct ComplianceView: View {
     // MARK: - Expenses view
 
     private var expensesView: some View {
-        let allExpenses: [ExpenseEntry] = (try? modelContext.fetch(FetchDescriptor<ExpenseEntry>())) ?? []
-        let categoryTotals = ExpenseEntry.totalsByCategory(allExpenses)
+        let byBucket = ExpenseEntry.deductibleByBucket(expenses)
+        let grandDeductible = expenses.reduce(0) { $0 + $1.deductibleAmount }
 
         return Group {
-            if allExpenses.isEmpty {
-                ContentUnavailableView("No Expenses", systemImage: "receipt", description: Text("Ask Co-Driver to log expenses or add them here."))
+            if expenses.isEmpty {
+                ContentUnavailableView {
+                    Label("No Expenses", systemImage: "receipt")
+                } description: {
+                    Text("Add a receipt or expense to start tracking deductions.")
+                } actions: {
+                    Button("Add Expense") { showingAddExpense = true }
+                        .buttonStyle(.borderedProminent)
+                }
             } else {
                 List {
-                    Section("By Category") {
-                        ForEach(categoryTotals.sorted(by: { $0.key < $1.key }), id: \.key) { category, total in
-                            HStack {
-                                Text(category.capitalized)
-                                Spacer()
-                                Text(formatCurrency(total))
-                                    .foregroundColor(.secondary)
+                    Section("Deductible by Category") {
+                        ForEach(TaxBucket.allCases) { bucket in
+                            let total = byBucket[bucket] ?? 0
+                            if total > 0 {
+                                HStack {
+                                    Label(bucket.displayName, systemImage: bucket.systemImage)
+                                    Spacer()
+                                    Text(formatCurrency(total)).foregroundColor(.secondary)
+                                }
                             }
+                        }
+                        HStack {
+                            Text("Total Deductible").fontWeight(.semibold)
+                            Spacer()
+                            Text(formatCurrency(grandDeductible)).fontWeight(.semibold)
                         }
                     }
                     Section("All Expenses") {
-                        ForEach(allExpenses.sorted(by: { $0.date > $1.date })) { expense in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(expense.note.isEmpty ? expense.category.capitalized : expense.note)
-                                    Text(expense.date.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.caption).foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                Text(formatCurrency(expense.amount))
-                            }
+                        ForEach(expenses) { expense in
+                            expenseRow(expense)
+                                .contentShape(Rectangle())
+                                .onTapGesture { openReceipt(expense) }
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet { modelContext.delete(expenses[index]) }
+                            try? modelContext.save()
                         }
                     }
                 }
@@ -218,31 +259,78 @@ struct ComplianceView: View {
         }
     }
 
-    // MARK: - Export actions
-
-    private func exportHOS() {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        var log = "HOS LOG — Exported \(formatter.string(from: Date()))\n"
-        log += String(repeating: "=", count: 40) + "\n"
-        for entry in hosEntries.reversed() {
-            log += "\(formatter.string(from: entry.timestamp)) | \(entry.dutyStatus.displayName)"
-            if !entry.locationName.isEmpty { log += " @ \(entry.locationName)" }
-            log += "\n"
+    private func expenseRow(_ expense: ExpenseEntry) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    if expense.hasReceipt {
+                        Image(systemName: "paperclip")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Text(expense.note.isEmpty ? expense.bucket.displayName : expense.note)
+                }
+                Text("\(expense.bucket.displayName) · \(expense.date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formatCurrency(expense.amount))
+                if expense.businessUsePercent < 100 {
+                    Text("\(Int(expense.businessUsePercent))% → \(formatCurrency(expense.deductibleAmount))")
+                        .font(.caption2).foregroundColor(.secondary)
+                }
+            }
         }
-        exportText = log
-        showingExport = true
     }
 
-    private func exportIFTA() {
+    // MARK: - Export actions
+
+    private func exportHOS(_ quarter: Quarter) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        let entries = hosEntries
+            .filter { quarter.contains($0.timestamp) }
+            .sorted { $0.timestamp < $1.timestamp }
+        var csv = "Timestamp,Duty Status,Location,Notes\n"
+        for entry in entries {
+            let note = entry.notes.replacingOccurrences(of: "\"", with: "\"\"")
+            csv += "\(formatter.string(from: entry.timestamp)),"
+            csv += "\(entry.dutyStatus.displayName),"
+            csv += "\"\(entry.locationName)\",\"\(note)\"\n"
+        }
+        guard let url = try? ExpenseReport.textFile(csv, filename: "iTrucker-HOS-\(quarter.id).csv") else { return }
+        exportItems = [url]
+        showingFileShare = true
+    }
+
+    private func exportIFTA(_ quarter: Quarter) {
+        let qTrips = trips.filter { quarter.contains($0.startDate) }
+        let stateTotals = TripRecord.aggregateStateMileage(qTrips)
         var csv = "State,Miles\n"
-        let stateTotals = TripRecord.aggregateStateMileage(trips)
         for (state, miles) in stateTotals.sorted(by: { $0.key < $1.key }) {
             csv += "\(state),\(String(format: "%.1f", miles))\n"
         }
-        exportText = csv
-        showingExport = true
+        guard let url = try? ExpenseReport.textFile(csv, filename: "iTrucker-IFTA-\(quarter.id).csv") else { return }
+        exportItems = [url]
+        showingFileShare = true
+    }
+
+    private func openReceipt(_ expense: ExpenseEntry) {
+        guard let data = expense.receiptImageData, let image = UIImage(data: data) else { return }
+        receiptToView = ReceiptImage(image: image)
+    }
+
+    private func exportTaxReportPDF(_ quarter: Quarter) {
+        guard let url = try? ExpenseReport.pdfFile(expenses, quarter: quarter, driverName: appState.driverName) else { return }
+        exportItems = [url]
+        showingFileShare = true
+    }
+
+    private func exportExpensesCSV(_ quarter: Quarter) {
+        guard let url = try? ExpenseReport.csvFile(expenses, quarter: quarter, driverName: appState.driverName) else { return }
+        exportItems = [url]
+        showingFileShare = true
     }
 
     private func formatCurrency(_ value: Double) -> String {
@@ -298,12 +386,54 @@ struct NewTripView: View {
     }
 }
 
+// MARK: - Receipt viewer
+
+/// Identifiable wrapper so a tapped receipt image can drive a `.sheet(item:)`.
+struct ReceiptImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+/// Full-screen viewer for an attached receipt, with a share option.
+struct ReceiptViewer: View {
+    let image: UIImage
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            ScrollView([.horizontal, .vertical]) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+            }
+            .navigationTitle("Receipt")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .primaryAction) {
+                    ShareLink(item: Image(uiImage: image), preview: SharePreview("Receipt", image: Image(uiImage: image))) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Share sheet
 
 struct ShareSheet: UIViewControllerRepresentable {
-    let text: String
+    let activityItems: [Any]
+
+    /// Share plain text (e.g. an HOS log).
+    init(text: String) { self.activityItems = [text] }
+
+    /// Share arbitrary items — typically a generated file URL (PDF/CSV) so the
+    /// user can route it to email, Dropbox, Google Drive, Files, AirDrop, etc.
+    init(items: [Any]) { self.activityItems = items }
+
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

@@ -9,6 +9,15 @@ import Foundation
 import Vision
 import VisionKit
 
+#if os(iOS)
+import PDFKit
+import UIKit
+#endif
+
+#if os(iOS)
+import PDFKit
+#endif
+
 struct OCRResult {
     let text: String
     let confidence: Float

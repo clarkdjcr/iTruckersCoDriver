@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		92581F3B302F9E76006B7751 /* IRS_REQUIREMENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = 92581F3A302F9E76006B7751 /* IRS_REQUIREMENTS.md */; };
+		92581F41302FA33D006B7751 /* DOCUMENTATION_INDEX.md in Resources */ = {isa = PBXBuildFile; fileRef = 92581F40302FA33D006B7751 /* DOCUMENTATION_INDEX.md */; };
+		92581FD2302FAC34006B7751 /* DriverTaxProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92581F3C302FA0DE006B7751 /* DriverTaxProfile.swift */; };
 		92B8D9CE2FFDE09F000E9004 /* LoadShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -52,6 +55,10 @@
 		924504542F5CF14C00004415 /* iTruckersCoDriver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTruckersCoDriver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		924504632F5CF14E00004415 /* iTruckersCoDriverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTruckersCoDriverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9245046D2F5CF14E00004415 /* iTruckersCoDriverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTruckersCoDriverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92581F3A302F9E76006B7751 /* IRS_REQUIREMENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = IRS_REQUIREMENTS.md; sourceTree = "<group>"; };
+		92581F3C302FA0DE006B7751 /* DriverTaxProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverTaxProfile.swift; sourceTree = "<group>"; };
+		92581F3E302FA20E006B7751 /* VehicleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleManagementView.swift; sourceTree = "<group>"; };
+		92581F40302FA33D006B7751 /* DOCUMENTATION_INDEX.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DOCUMENTATION_INDEX.md; sourceTree = "<group>"; };
 		92B8D9C42FFDE09F000E9004 /* LoadShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LoadShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		92B8D9E02FFDEF4C000E9004 /* LoadShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = LoadShareExtension.entitlements; path = LoadShareExtension/LoadShareExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -63,13 +70,6 @@
 				Info.plist,
 			);
 			target = 924504532F5CF14C00004415 /* iTruckersCoDriver */;
-		};
-		926D53542FFDF73500D35FA4 /* Exceptions for "iTruckersCoDriver" folder in "LoadShareExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Core/PendingLoadImportStore.swift,
-			);
-			target = 92B8D9C32FFDE09F000E9004 /* LoadShareExtension */;
 		};
 		926D53552FFDF81600D35FA4 /* Exceptions for "LoadShareExtension" folder in "LoadShareExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -85,7 +85,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9245048B2F5D05E600004415 /* Exceptions for "iTruckersCoDriver" folder in "iTruckersCoDriver" target */,
-				926D53542FFDF73500D35FA4 /* Exceptions for "iTruckersCoDriver" folder in "LoadShareExtension" target */,
 			);
 			path = iTruckersCoDriver;
 			sourceTree = "<group>";
@@ -150,6 +149,10 @@
 				924504662F5CF14E00004415 /* iTruckersCoDriverTests */,
 				924504702F5CF14E00004415 /* iTruckersCoDriverUITests */,
 				926D534E2FFDF60A00D35FA4 /* LoadShareExtension */,
+				92581F3A302F9E76006B7751 /* IRS_REQUIREMENTS.md */,
+				92581F3C302FA0DE006B7751 /* DriverTaxProfile.swift */,
+				92581F3E302FA20E006B7751 /* VehicleManagementView.swift */,
+				92581F40302FA33D006B7751 /* DOCUMENTATION_INDEX.md */,
 				924504552F5CF14C00004415 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -268,7 +271,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2700;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					924504532F5CF14C00004415 = {
 						CreatedOnToolsVersion = 26.3;
@@ -351,6 +354,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92581F3B302F9E76006B7751 /* IRS_REQUIREMENTS.md in Resources */,
+				92581F41302FA33D006B7751 /* DOCUMENTATION_INDEX.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,6 +366,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92581FD2302FAC34006B7751 /* DriverTaxProfile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,6 +446,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -463,8 +470,10 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
@@ -502,6 +511,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -518,7 +528,9 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
@@ -530,7 +542,8 @@
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = iTruckersCoDriver/iTruckersCoDriver.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -568,7 +581,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -580,7 +593,7 @@
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -599,7 +612,8 @@
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = iTruckersCoDriver/iTruckersCoDriver.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -637,7 +651,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -649,7 +663,7 @@
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -665,12 +679,13 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriverTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -691,12 +706,13 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriverTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -716,17 +732,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriverUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = UI_TEST_TARGET;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -741,17 +759,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriverUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = UI_TEST_TARGET;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -767,19 +787,19 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = LoadShareExtension/LoadShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LoadShareExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LoadShareExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver.LoadShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -799,19 +819,19 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = LoadShareExtension/LoadShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 965RA266P3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LoadShareExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LoadShareExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = clarkdjcr.iTruckersCoDriver.LoadShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

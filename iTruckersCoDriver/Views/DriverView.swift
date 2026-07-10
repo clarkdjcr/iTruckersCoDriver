@@ -223,10 +223,10 @@ struct VoiceTabView: View {
         }
         .colorScheme(.dark)
         .onAppear { voiceManager.requestPermissions() }
-        .alert("API Key Required", isPresented: $showAPIKeyAlert) {
+        .alert("Assistant Unavailable", isPresented: $showAPIKeyAlert) {
             Button("OK") {}
         } message: {
-            Text("Please add your Claude API key in Settings to enable AI voice interaction.")
+            Text("Co-Driver uses Apple Intelligence, which isn't available on this device. HOS, compliance, and reports still work.")
         }
     }
 
@@ -328,7 +328,7 @@ struct VoiceTabView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 ForEach(quickCommands, id: \.self) { cmd in
-                    Button(action: { /* Handle command */ }) {
+                    Button(action: { handleQuickCommand(cmd) }) {
                         Text(cmd)
                             .font(Theme.Typography.caption())
                             .foregroundColor(Theme.textPrimary)
@@ -341,6 +341,7 @@ struct VoiceTabView: View {
                                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
                             )
                     }
+                    .disabled(driverState.isProcessingAI)
                 }
             }
             .padding(.horizontal)
@@ -433,8 +434,18 @@ struct VoiceTabView: View {
     // MARK: - Helpers
 
     private func handleMicTap() {
-        guard appState.hasAPIKey else { showAPIKeyAlert = true; return }
+        guard aiReady else { showAPIKeyAlert = true; return }
         voiceManager.toggleListening()
+    }
+
+    private func handleQuickCommand(_ cmd: String) {
+        guard aiReady else { showAPIKeyAlert = true; return }
+        voiceManager.submitTextCommand(cmd)
+    }
+
+    /// The on-device assistant is ready when Apple Intelligence is available.
+    private var aiReady: Bool {
+        appState.isAppleIntelligenceAvailable
     }
 
     private var micIcon: String {

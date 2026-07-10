@@ -10,12 +10,10 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
 
-    @State private var apiKeyInput = ""
     @State private var driverName = ""
     @State private var cdlState = ""
     @State private var selectedCycle: HOSCycle = .seventyHour
     @State private var isELogMode = true
-    @State private var showAPIKey = false
     @State private var showSavedAlert = false
     @State private var fixedCostInput = ""
     @State private var truckMPGInput = ""
@@ -23,8 +21,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                appModeSection
-                aiConfigSection
+                assistantSection
                 driverProfileSection
                 hosSection
                 costEfficiencySection
@@ -47,105 +44,18 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private var appModeSection: some View {
+    private var assistantSection: some View {
         Section {
-            Picker("App Mode", selection: $appState.role) {
-                ForEach(AppRole.allCases, id: \.self) { role in
-                    Text(role.displayName).tag(role)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.vertical, 4)
             HStack(alignment: .top, spacing: 8) {
-                Image(systemName: appState.role == .driver ? "truck.box.fill" : "desktopcomputer")
-                    .foregroundColor(.blue)
-                Text(appState.role == .driver
-                    ? "Driver mode: voice assistant, HOS, route, and compliance tools."
-                    : "Dispatcher mode: fleet overview, messages, loads, and maintenance.")
+                Image(systemName: appState.isAppleIntelligenceAvailable ? "lock.shield.fill" : "info.circle")
+                    .foregroundColor(appState.isAppleIntelligenceAvailable ? .green : .blue)
+                Text(appState.isAppleIntelligenceAvailable
+                    ? "Co-Driver runs on-device with Apple Intelligence — private, no account or API key, works offline."
+                    : "The voice assistant needs Apple Intelligence (iPhone 15 Pro or later). HOS, compliance, and reports work on any device.")
                     .font(.caption).foregroundColor(.secondary)
             }
         } header: {
-            Text("App Mode")
-        }
-    }
-
-    @ViewBuilder
-    private var aiConfigSection: some View {
-        Section {
-            // Backend picker (only shown when Apple Intelligence is available)
-            if appState.isAppleIntelligenceAvailable {
-                Picker("AI Backend", selection: $appState.activeBackend) {
-                    ForEach(AIBackend.allCases, id: \.self) { backend in
-                        Label(backend.displayName, systemImage: backend.iconName)
-                            .tag(backend)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.vertical, 4)
-
-                if appState.activeBackend == .appleIntelligence {
-                    HStack {
-                        Image(systemName: "lock.shield.fill").foregroundColor(.green)
-                        Text("On-device · No API key required · Works offline")
-                            .font(.caption).foregroundColor(.secondary)
-                    }
-                }
-            } else {
-                HStack {
-                    Image(systemName: "info.circle").foregroundColor(.blue)
-                    Text("Apple Intelligence requires iPhone 15 Pro or later.")
-                        .font(.caption).foregroundColor(.secondary)
-                }
-            }
-
-            // Claude API key — shown when Claude is selected or Apple Intelligence unavailable
-            if appState.activeBackend == .claude || !appState.isAppleIntelligenceAvailable {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("Claude API Key", systemImage: "key.fill")
-                        .font(.subheadline).fontWeight(.medium)
-                    Text("Get your key at console.anthropic.com")
-                        .font(.caption).foregroundColor(.secondary)
-                    HStack {
-                        if showAPIKey {
-                            TextField("sk-ant-...", text: $apiKeyInput)
-                                .autocorrectionDisabled()
-                                #if os(iOS)
-                                .textInputAutocapitalization(.never)
-                                #endif
-                        } else {
-                            SecureField("sk-ant-...", text: $apiKeyInput)
-                                .autocorrectionDisabled()
-                        }
-                        Button {
-                            showAPIKey.toggle()
-                        } label: {
-                            Image(systemName: showAPIKey ? "eye.slash" : "eye")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(10)
-                    .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(8)
-
-                    HStack {
-                        if appState.hasAPIKey {
-                            Label("API key configured", systemImage: "checkmark.circle.fill")
-                                .font(.caption).foregroundColor(.green)
-                        }
-                        Spacer()
-                        if appState.hasAPIKey {
-                            Button("Remove", role: .destructive) {
-                                KeychainHelper.delete(forKey: KeychainHelper.anthropicAPIKey)
-                                apiKeyInput = ""
-                            }
-                            .font(.caption)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-        } header: {
-            Text("AI Configuration")
+            Text("Co-Driver Assistant")
         }
     }
 
@@ -232,22 +142,20 @@ struct SettingsView: View {
             HStack {
                 Text("Version")
                 Spacer()
-                Text("1.0 (3)")
+                Text("2.0 (8)")
                     .foregroundColor(.secondary)
             }
             HStack {
-                Text("AI Model")
+                Text("Assistant")
                 Spacer()
-                Text(appState.activeBackend.modelLabel)
+                Text("Apple Intelligence (on-device)")
                     .foregroundColor(.secondary)
             }
-            Link("Anthropic Console", destination: URL(string: "https://console.anthropic.com")!)
             Link("FMCSA HOS Regulations", destination: URL(string: "https://www.fmcsa.dot.gov/regulations/hours-service/summary-hours-service-regulations")!)
         }
     }
 
     private func loadCurrentSettings() {
-        if let key = appState.apiKey { apiKeyInput = key }
         driverName = appState.driverName
         cdlState = appState.cdlState
         selectedCycle = appState.hosCycle
@@ -256,11 +164,6 @@ struct SettingsView: View {
     }
 
     private func save() {
-        let trimmed = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty {
-            KeychainHelper.save(trimmed, forKey: KeychainHelper.anthropicAPIKey)
-        }
-
         appState.driverName = driverName
         appState.cdlState = cdlState
         appState.hosCycle = selectedCycle

@@ -40,9 +40,6 @@ class AppState: ObservableObject {
     @Published var healthMonitoringEnabled: Bool {
         didSet { UserDefaults.standard.set(healthMonitoringEnabled, forKey: "healthMonitoringEnabled") }
     }
-    @Published var activeBackend: AIBackend {
-        didSet { UserDefaults.standard.set(activeBackend.rawValue, forKey: "aiBackend") }
-    }
     @Published var role: AppRole {
         didSet { UserDefaults.standard.set(role.rawValue, forKey: "appRole") }
     }
@@ -85,26 +82,11 @@ class AppState: ObservableObject {
             UserDefaults.standard.set(newID, forKey: "driverID")
             self.driverID = newID
         }
-
-        // Default to Apple Intelligence when available; fall back to Claude otherwise.
-        let savedRaw = UserDefaults.standard.string(forKey: "aiBackend")
-        let savedBackend: AIBackend? = savedRaw.flatMap { AIBackend(rawValue: $0) }
-        let supportsAppleIntelligence: Bool
-        if case .available = SystemLanguageModel.default.availability {
-            supportsAppleIntelligence = true
-        } else {
-            supportsAppleIntelligence = false
-        }
-        self.activeBackend = savedBackend ?? (supportsAppleIntelligence ? .appleIntelligence : .claude)
     }
-
-    var apiKey: String? {
-        KeychainHelper.load(forKey: KeychainHelper.anthropicAPIKey)
-    }
-
-    var hasAPIKey: Bool { apiKey != nil && !(apiKey!.isEmpty) }
 
     /// Whether this device can run Apple Intelligence at runtime.
+    /// The Co-Driver assistant is on-device only; when false, the assistant is
+    /// unavailable but the rest of the app (HOS, expenses, reports) works.
     var isAppleIntelligenceAvailable: Bool {
         if case .available = SystemLanguageModel.default.availability { return true }
         return false
@@ -115,12 +97,10 @@ class AppState: ObservableObject {
 
 enum AppRole: String, CaseIterable {
     case driver = "driver"
-    case dispatcher = "dispatcher"
 
     var displayName: String {
         switch self {
-        case .driver:     return "Driver"
-        case .dispatcher: return "Dispatcher"
+        case .driver: return "Driver"
         }
     }
 }

@@ -2,11 +2,33 @@
 //  CoDriverAIService.swift
 //  iTruckersCoDriver
 //
-//  Common interface for AI backends. Both AppleIntelligenceService and ClaudeService
-//  conform to this protocol so VoiceManager is backend-agnostic.
+//  Common interface for the Co-Driver AI. AppleIntelligenceService conforms to
+//  this so VoiceManager stays independent of the underlying model.
 //
 
 import Foundation
+
+// MARK: - Tool handler protocol
+
+/// Implemented by VoiceManager; the AI service calls these to perform app actions.
+/// (Named for historical reasons; the app now runs on-device Apple Intelligence.)
+protocol ClaudeToolHandler: AnyObject {
+    func handleLogDutyStatus(status: String, notes: String?) async -> String
+    func handleGetHOSSummary() async -> String
+    func handleFindPlaces(type: String, radiusMiles: Int) async -> String
+    func handleGetWeather(location: String?) async -> String
+    func handleNavigateTo(destination: String) async -> String
+    func handleSendDispatchMessage(message: String) async -> String
+    func handleLogExpense(amount: Double, category: String, note: String?) async -> String
+    func handleContactCustomer(loadNumber: String, message: String, channel: String) async -> String
+    func handleGetDeliveryContact(loadNumber: String) async -> String
+    func handleReportMaintenanceIssue(description: String, severity: String) async -> String
+    func handleGetHealthSummary() async -> String
+    func handleGetDocument(documentName: String) async -> String
+    func handleCalculateProfit(loadRevenue: Double, miles: Double) async -> String
+    func handleStartInspection() async -> String
+    func handleContinueInspection() async -> String
+}
 
 protocol CoDriverAIService: AnyObject {
     /// The app-side handler that executes tool actions (implemented by VoiceManager).
@@ -32,15 +54,12 @@ protocol CoDriverAIService: AnyObject {
 
 enum AIServiceError: LocalizedError {
     case appleIntelligenceUnavailable(String)
-    case noAPIKey
     case contextLengthExceeded
 
     var errorDescription: String? {
         switch self {
         case .appleIntelligenceUnavailable(let reason):
             return "Apple Intelligence unavailable: \(reason)"
-        case .noAPIKey:
-            return "No Claude API key. Add one in Settings to use Claude."
         case .contextLengthExceeded:
             return "Conversation reset — context was too long."
         }

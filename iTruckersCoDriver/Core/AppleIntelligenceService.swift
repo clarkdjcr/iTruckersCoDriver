@@ -21,7 +21,7 @@ final class ToolHandlerRef: @unchecked Sendable {
     init() {}
 }
 
-// MARK: - System Instructions (mirrors ClaudeService system prompt)
+// MARK: - System Instructions
 
 private let coDriverInstructions = """
 You are "Co-Driver", the AI companion in the iTrucker's Co-Driver app for independent truck drivers.
@@ -156,7 +156,7 @@ struct LogExpenseTool: Tool {
     @Generable struct Arguments {
         @Guide(description: "Dollar amount of the expense")
         var amount: Double
-        @Guide(description: "Expense category: fuel, food, lodging, tolls, maintenance, or other")
+        @Guide(description: "Deductible tax bucket: 'travel' (lodging, tolls, parking), 'suppliesGear' (CB radio, GPS, logbooks, safety equipment), 'technology' (business portion of cell phone, data, ELD service), or 'other'. The truck's fuel/maintenance are company-paid — do not log those.")
         var category: String
         @Guide(description: "Optional description of the expense")
         var note: String?

@@ -12,7 +12,6 @@ import SwiftData
 struct iTruckersCoDriverApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var driverState = DriverState()
-    @StateObject private var dispatcherState = DispatcherState()
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -69,18 +68,7 @@ struct iTruckersCoDriverApp: App {
                 .modelContainer(sharedModelContainer)
                 .environmentObject(appState)
                 .environmentObject(driverState)
-                .environmentObject(dispatcherState)
         }
-        #if os(macOS)
-        .defaultSize(width: 1100, height: 700)
-        #endif
-
-        #if os(macOS)
-        Settings {
-            DispatcherSettingsView()
-                .environmentObject(appState)
-        }
-        #endif
     }
 }
 
@@ -90,13 +78,12 @@ struct RootView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.modelContext) private var modelContext
 
-    #if os(iOS)
     @State private var isOnboardingComplete: Bool = false
 
     private var onboardingDone: Bool {
         if appState.onboardingComplete || isOnboardingComplete { return true }
-        // Backward compat: existing users with a DriverAccount or API key skip re-onboarding
-        if appState.hasAPIKey || checkExistingAccount() {
+        // Backward compat: existing users with a completed DriverAccount skip re-onboarding
+        if checkExistingAccount() {
             appState.onboardingComplete = true
             return true
         }
@@ -118,59 +105,4 @@ struct RootView: View {
         )
         return ((try? modelContext.fetch(descriptor))?.isEmpty == false)
     }
-
-    #else
-
-    // macOS: always dispatcher — show a first-launch setup sheet
-    @State private var showMacOnboarding: Bool = false
-    @State private var macName = ""
-    @State private var macCompany = ""
-
-    var body: some View {
-        ContentView()
-            .onAppear {
-                if !appState.onboardingComplete { showMacOnboarding = true }
-            }
-            .sheet(isPresented: $showMacOnboarding) {
-                macOnboardingSheet
-            }
-    }
-
-    private var macOnboardingSheet: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 8) {
-                Text("🚛").font(.system(size: 56))
-                Text("Welcome to iTrucker Dispatcher")
-                    .font(.title2).fontWeight(.bold)
-                Text("A quick setup before you get started.")
-                    .foregroundColor(.secondary)
-            }
-
-            Form {
-                Section("Your Info") {
-                    TextField("Your name", text: $macName)
-                    TextField("Company / Fleet name (optional)", text: $macCompany)
-                }
-            }
-            .formStyle(.grouped)
-            .frame(height: 140)
-
-            HStack {
-                Spacer()
-                Button("Get Started") {
-                    appState.driverName = macName.isEmpty ? "Dispatcher" : macName
-                    appState.companyName = macCompany
-                    appState.role = .dispatcher
-                    appState.onboardingComplete = true
-                    showMacOnboarding = false
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(macName.isEmpty)
-            }
-        }
-        .padding(32)
-        .frame(width: 420)
-        .interactiveDismissDisabled()
-    }
-    #endif
 }
