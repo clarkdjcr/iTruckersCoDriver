@@ -35,6 +35,10 @@ struct iTruckersCoDriverApp: App {
             MaintenanceReport.self,
             // Phase 5: Profit planning
             LoadOpportunity.self,
+            // Tax & Vehicle models
+            DriverTaxProfile.self,
+            QuarterlyIncome.self,
+            VehicleInfo.self,
         ])
 
         // Local persistent store. CloudKit (.automatic) is intentionally disabled until

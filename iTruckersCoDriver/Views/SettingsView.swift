@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.modelContext) private var modelContext
+    @Query private var taxProfiles: [DriverTaxProfile]
 
     @State private var driverName = ""
     @State private var cdlState = ""
@@ -87,6 +90,9 @@ struct SettingsView: View {
                     .multilineTextAlignment(.trailing)
                     .foregroundColor(.secondary)
                     .frame(width: 60)
+            }
+            NavigationLink(destination: TaxProfileView()) {
+                Text("Tax Profile Details")
             }
         }
     }
@@ -182,6 +188,20 @@ struct SettingsView: View {
         appState.driverType = selectedDriverType
         if let cpm = Double(fixedCostInput), cpm > 0 { appState.fixedCostPerMile = cpm }
         appState.truckMPG = Double(truckMPGInput) ?? 0
+
+        // Sync to SwiftData DriverTaxProfile
+        if let profile = taxProfiles.first {
+            profile.driverType = selectedDriverType
+            profile.fullName = driverName
+            profile.state = cdlState
+        } else {
+            let profile = DriverTaxProfile()
+            profile.driverType = selectedDriverType
+            profile.fullName = driverName
+            profile.state = cdlState
+            modelContext.insert(profile)
+        }
+        try? modelContext.save()
 
         showSavedAlert = true
     }

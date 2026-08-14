@@ -18,6 +18,7 @@ struct ComplianceView: View {
     @State private var showingNewTrip = false
     @State private var showingAddExpense = false
     @State private var showingBatchReceiptImport = false
+    @State private var showingTaxCompiler = false
     @State private var exportItems: [Any] = []
     @State private var showingFileShare = false
     @State private var receiptToView: ReceiptImage?
@@ -47,6 +48,7 @@ struct ComplianceView: View {
                     Menu {
                         Button("Add Expense", systemImage: "plus.circle") { showingAddExpense = true }
                         Button("Import Receipt PDFs", systemImage: "doc.on.doc") { showingBatchReceiptImport = true }
+                        Button("OCR Tax Compiler", systemImage: "tablecells.badge.ellipsis") { showingTaxCompiler = true }
                         Button("New Trip", systemImage: "plus") { showingNewTrip = true }
 
                         Menu("Tax Report (PDF)") {
@@ -81,6 +83,7 @@ struct ComplianceView: View {
             .sheet(isPresented: $showingNewTrip) { NewTripView() }
             .sheet(isPresented: $showingAddExpense) { AddExpenseView() }
             .sheet(isPresented: $showingBatchReceiptImport) { BatchReceiptImportView() }
+            .sheet(isPresented: $showingTaxCompiler) { TaxCompilerView() }
             .sheet(isPresented: $showingFileShare) {
                 ShareSheet(items: exportItems)
             }
