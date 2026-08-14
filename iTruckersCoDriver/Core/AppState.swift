@@ -49,6 +49,9 @@ class AppState: ObservableObject {
     @Published var companyName: String {
         didSet { UserDefaults.standard.set(companyName, forKey: "companyName") }
     }
+    @Published var driverType: DriverType {
+        didSet { UserDefaults.standard.set(driverType.rawValue, forKey: "driverType") }
+    }
     /// Driver's fixed operating cost per mile (insurance, truck payment, etc.). Default 0.45.
     @Published var fixedCostPerMile: Double {
         didSet { UserDefaults.standard.set(fixedCostPerMile, forKey: "fixedCostPerMile") }
@@ -74,6 +77,8 @@ class AppState: ObservableObject {
         self.role = AppRole(rawValue: roleRaw) ?? .driver
         self.onboardingComplete = UserDefaults.standard.bool(forKey: "onboardingComplete")
         self.companyName = UserDefaults.standard.string(forKey: "companyName") ?? ""
+        let driverTypeRaw = UserDefaults.standard.string(forKey: "driverType") ?? ""
+        self.driverType = DriverType(rawValue: driverTypeRaw) ?? .independentContractor
 
         if let existing = UserDefaults.standard.string(forKey: "driverID") {
             self.driverID = existing

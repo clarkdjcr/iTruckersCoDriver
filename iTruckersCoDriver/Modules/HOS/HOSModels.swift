@@ -40,6 +40,18 @@ final class ExpenseEntry {
     var category: String = ""
     var amount: Double = 0
     var note: String = ""
+    var vendorName: String = ""
+    var subtotal: Double = 0
+    var taxAmount: Double = 0
+    var paymentMethod: String = ""
+    var stateCode: String = ""
+    var gallons: Double = 0
+    var pricePerGallon: Double = 0
+    var odometer: Double = 0
+    var rawOCRText: String = ""
+    var ocrConfidence: Double = 0
+    var isVerified: Bool = true
+    var receiptFingerprint: String = ""
     /// Percentage of `amount` that is business-deductible (e.g. a phone used
     /// partly for personal calls). Defaults to 100 for fully-deductible items.
     var businessUsePercent: Double = 100

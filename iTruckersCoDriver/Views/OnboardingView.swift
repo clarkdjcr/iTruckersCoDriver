@@ -23,10 +23,11 @@ struct OnboardingView: View {
     @State private var userName = ""
     @State private var cdlState = ""
     @State private var selectedCycle: HOSCycle = .seventyHour
+    @State private var selectedDriverType: DriverType = .independentContractor
     @State private var account: DriverAccount?
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 Group {
                     switch step {
@@ -114,6 +115,21 @@ struct OnboardingView: View {
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(8)
                 }
+
+                Picker("Work & Tax Status", selection: $selectedDriverType) {
+                    ForEach(DriverType.allCases) { driverType in
+                        Text(driverType.rawValue).tag(driverType)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity)
+                .padding(7)
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(8)
+
+                Text(selectedDriverType.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 24)
 
@@ -160,6 +176,7 @@ struct OnboardingView: View {
     // MARK: - Actions
 
     private func finishDriverOnboarding() {
+        appState.driverType = selectedDriverType
         let acc = getOrCreateAccount()
         onboardingManager.completeDriverOnboarding(
             account: acc,

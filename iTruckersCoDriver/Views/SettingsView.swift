@@ -17,14 +17,17 @@ struct SettingsView: View {
     @State private var showSavedAlert = false
     @State private var fixedCostInput = ""
     @State private var truckMPGInput = ""
+    @State private var selectedDriverType: DriverType = .independentContractor
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 assistantSection
                 driverProfileSection
                 hosSection
-                costEfficiencySection
+                if selectedDriverType == .ownerOperator {
+                    costEfficiencySection
+                }
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -69,6 +72,14 @@ struct SettingsView: View {
                     .multilineTextAlignment(.trailing)
                     .foregroundColor(.secondary)
             }
+            Picker("Work & Tax Status", selection: $selectedDriverType) {
+                ForEach(DriverType.allCases) { driverType in
+                    Text(driverType.rawValue).tag(driverType)
+                }
+            }
+            Text(selectedDriverType.description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack {
                 Text("CDL State")
                 Spacer()
@@ -142,7 +153,7 @@ struct SettingsView: View {
             HStack {
                 Text("Version")
                 Spacer()
-                Text("2.0 (8)")
+                Text("2.1 (9)")
                     .foregroundColor(.secondary)
             }
             HStack {
@@ -159,6 +170,7 @@ struct SettingsView: View {
         driverName = appState.driverName
         cdlState = appState.cdlState
         selectedCycle = appState.hosCycle
+        selectedDriverType = appState.driverType
         fixedCostInput = String(format: "%.2f", appState.fixedCostPerMile)
         truckMPGInput = appState.truckMPG > 0 ? String(format: "%.1f", appState.truckMPG) : ""
     }
@@ -167,6 +179,7 @@ struct SettingsView: View {
         appState.driverName = driverName
         appState.cdlState = cdlState
         appState.hosCycle = selectedCycle
+        appState.driverType = selectedDriverType
         if let cpm = Double(fixedCostInput), cpm > 0 { appState.fixedCostPerMile = cpm }
         appState.truckMPG = Double(truckMPGInput) ?? 0
 

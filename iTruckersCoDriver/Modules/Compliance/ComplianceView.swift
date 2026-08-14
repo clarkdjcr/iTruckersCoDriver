@@ -17,6 +17,7 @@ struct ComplianceView: View {
     @Query(sort: \ExpenseEntry.date, order: .reverse) private var expenses: [ExpenseEntry]
     @State private var showingNewTrip = false
     @State private var showingAddExpense = false
+    @State private var showingBatchReceiptImport = false
     @State private var exportItems: [Any] = []
     @State private var showingFileShare = false
     @State private var receiptToView: ReceiptImage?
@@ -45,6 +46,7 @@ struct ComplianceView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button("Add Expense", systemImage: "plus.circle") { showingAddExpense = true }
+                        Button("Import Receipt PDFs", systemImage: "doc.on.doc") { showingBatchReceiptImport = true }
                         Button("New Trip", systemImage: "plus") { showingNewTrip = true }
 
                         Menu("Tax Report (PDF)") {
@@ -78,6 +80,7 @@ struct ComplianceView: View {
             }
             .sheet(isPresented: $showingNewTrip) { NewTripView() }
             .sheet(isPresented: $showingAddExpense) { AddExpenseView() }
+            .sheet(isPresented: $showingBatchReceiptImport) { BatchReceiptImportView() }
             .sheet(isPresented: $showingFileShare) {
                 ShareSheet(items: exportItems)
             }

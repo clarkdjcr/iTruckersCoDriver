@@ -25,9 +25,17 @@ struct OCRResult {
 
 struct ReceiptData {
     var date: Date?
+    var vendorName: String?
+    var subtotal: Double?
+    var taxAmount: Double?
     var gallons: Double?
+    var pricePerGallon: Double?
     var totalPrice: Double?
     var state: String?
+    var paymentMethod: String?
+    var odometer: Double?
+    var rawText: String = ""
+    var confidence: Double = 0
 }
 
 struct RateConfirmationData {
@@ -79,35 +87,58 @@ class DocumentProcessor {
         }
     }
     
-    /// Heuristic-based parsing for fuel receipts.
-    /// In a production app, this would be more robust or use LLM-based extraction.
+    /// Parses common bookkeeping fields from OCR text. The caller presents every
+    /// result for driver review before creating a verified expense.
     func parseReceipt(from results: [OCRResult]) -> ReceiptData {
         var data = ReceiptData()
-        
-        for result in results {
-            let text = result.text.lowercased()
-            
-            // Look for Gallons (e.g., "120.5 G" or "Gallons 120.5")
-            if text.contains("gallons") || text.contains(" qty") {
-                if let value = extractDouble(from: text) {
-                    data.gallons = value
-                }
-            }
-            
-            // Look for Total Price
-            if text.contains("total") || text.contains("amount") {
-                if let value = extractDouble(from: text) {
-                    data.totalPrice = value
-                }
-            }
-            
-            // Look for State codes (e.g., "TX", "CA")
-            // Simple regex for 2 capital letters preceded by space/comma
-            if let state = extractState(from: result.text) {
-                data.state = state
+        let lines = results.map(\.text).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        data.rawText = lines.joined(separator: "\n")
+        if !results.isEmpty {
+            data.confidence = Double(results.reduce(0) { $0 + $1.confidence }) / Double(results.count)
+        }
+
+        data.vendorName = lines.first { line in
+            let lower = line.lowercased()
+            return line.count > 2 &&
+                !lower.contains("receipt") &&
+                !lower.contains("invoice") &&
+                !lower.contains("welcome") &&
+                extractDollarAmount(from: line) == nil
+        }?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) {
+            for line in lines where data.date == nil {
+                let range = NSRange(location: 0, length: (line as NSString).length)
+                data.date = detector.firstMatch(in: line, range: range)?.date
             }
         }
-        
+
+        for line in lines {
+            let text = line.lowercased()
+            let amount = extractDollarAmount(from: line) ?? extractDouble(from: text)
+
+            if text.contains("gallon") || text.contains(" qty") {
+                data.gallons = extractDouble(from: text)
+            }
+            if text.contains("price/gal") || text.contains("price per gal") || text.contains("ppu") {
+                data.pricePerGallon = extractDouble(from: text)
+            }
+            if text.contains("odometer") || text.contains("odometer") || text.contains("mileage") {
+                data.odometer = extractDouble(from: text)
+            }
+            if text.contains("subtotal"), let amount { data.subtotal = amount }
+            if (text.contains("sales tax") || text.hasPrefix("tax")), let amount { data.taxAmount = amount }
+            if (text.contains("grand total") || text.contains("amount due") || text.hasPrefix("total")), let amount {
+                data.totalPrice = amount
+            }
+            if data.state == nil, let state = extractState(from: line) { data.state = state }
+
+            if text.contains("visa") { data.paymentMethod = "Visa" }
+            else if text.contains("mastercard") || text.contains("master card") { data.paymentMethod = "Mastercard" }
+            else if text.contains("amex") || text.contains("american express") { data.paymentMethod = "American Express" }
+            else if text.contains("cash") { data.paymentMethod = "Cash" }
+        }
+
         return data
     }
     

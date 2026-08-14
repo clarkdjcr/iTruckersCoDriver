@@ -30,7 +30,7 @@ final class TaxBucketTests: XCTestCase {
     }
 
     func test_resolve_unknownFallsBackToOther() {
-        XCTAssertEqual(TaxBucket.resolve("fuel"), .other)
+        XCTAssertEqual(TaxBucket.resolve("fuel"), .fuel)
         XCTAssertEqual(TaxBucket.resolve("random-thing"), .other)
         XCTAssertEqual(TaxBucket.resolve(""), .other)
     }
@@ -40,6 +40,33 @@ final class TaxBucketTests: XCTestCase {
         XCTAssertFalse(TaxBucket.travel.supportsBusinessUse)
         XCTAssertFalse(TaxBucket.suppliesGear.supportsBusinessUse)
         XCTAssertFalse(TaxBucket.other.supportsBusinessUse)
+    }
+
+    func test_independentContractor_excludesFuelAndOwnershipBuckets() {
+        let buckets = TaxBucket.allowed(for: .independentContractor)
+
+        XCTAssertFalse(buckets.contains(.fuel))
+        XCTAssertFalse(buckets.contains(.repairsMaintenance))
+        XCTAssertFalse(buckets.contains(.truckLease))
+        XCTAssertFalse(buckets.contains(.insurance))
+        XCTAssertFalse(buckets.contains(.depreciableEquipment))
+        XCTAssertTrue(buckets.contains(.meals))
+        XCTAssertTrue(buckets.contains(.technology))
+    }
+
+    func test_ownerOperator_hasAllBuckets() {
+        XCTAssertEqual(TaxBucket.allowed(for: .ownerOperator), TaxBucket.allCases)
+    }
+
+    func test_suggestion_rejectsFuelForIndependentContractor() {
+        XCTAssertEqual(
+            TaxBucket.suggested(from: "Diesel 110 gallons", for: .independentContractor),
+            .other
+        )
+        XCTAssertEqual(
+            TaxBucket.suggested(from: "Hotel lodging", for: .independentContractor),
+            .travel
+        )
     }
 
     // MARK: - Deductible math
