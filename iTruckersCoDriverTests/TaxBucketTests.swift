@@ -81,6 +81,16 @@ final class TaxBucketTests: XCTestCase {
         XCTAssertEqual(e.deductibleAmount, 60, accuracy: 0.001)
     }
 
+    func test_deductibleAmount_appliesMealLimitation() {
+        let e = ExpenseEntry(category: "meals", amount: 100)
+        XCTAssertEqual(e.deductibleAmount, 80, accuracy: 0.001) // 80% DOT meal deduction
+    }
+
+    func test_deductibleAmount_appliesMealLimitationAndBusinessUse() {
+        let e = ExpenseEntry(category: "meals", amount: 100, businessUsePercent: 50)
+        XCTAssertEqual(e.deductibleAmount, 40, accuracy: 0.001)
+    }
+
     func test_deductibleByBucket_sumsDeductiblePortionPerBucket() {
         let expenses = [
             ExpenseEntry(category: "travel", amount: 100),                               // 100

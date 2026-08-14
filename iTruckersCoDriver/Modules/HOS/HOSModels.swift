@@ -74,8 +74,11 @@ extension ExpenseEntry {
     var bucket: TaxBucket { TaxBucket.resolve(category) }
 
     /// The portion of `amount` that is actually deductible after applying
-    /// the business-use percentage.
-    var deductibleAmount: Double { amount * (businessUsePercent / 100) }
+    /// the business-use percentage. Applies the 80% DOT deduction rate for meals.
+    var deductibleAmount: Double {
+        let base = amount * (businessUsePercent / 100)
+        return bucket == .meals ? base * 0.8 : base
+    }
 
     /// Whether a scanned receipt image is attached to this expense.
     var hasReceipt: Bool { receiptImageData != nil }

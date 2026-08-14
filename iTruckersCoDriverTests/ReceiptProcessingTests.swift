@@ -37,4 +37,30 @@ final class ReceiptProcessingTests: XCTestCase {
         XCTAssertEqual(TaxBucket.suggested(from: "Roadside repair and parts"), .repairsMaintenance)
         XCTAssertEqual(TaxBucket.suggested(from: "Holiday Inn lodging"), .travel)
     }
+
+    func test_parseReceipt_ignoresHeaderDateForVendorName() {
+        let results = [
+            OCRResult(text: "08/14/2026 12:34 PM", confidence: 0.95),
+            OCRResult(text: "PILOT TRAVEL CENTER #456", confidence: 0.96),
+            OCRResult(text: "Total $120.00", confidence: 0.98)
+        ]
+        
+        let receipt = DocumentProcessor.shared.parseReceipt(from: results)
+        
+        XCTAssertEqual(receipt.vendorName, "PILOT TRAVEL CENTER #456")
+        XCTAssertEqual(receipt.totalPrice ?? 0, 120.00, accuracy: 0.001)
+    }
+
+    func test_parseReceipt_ignoresInvalidStateCodes() {
+        let results = [
+            OCRResult(text: "PILOT TRAVEL CENTER", confidence: 0.95),
+            OCRResult(text: "QTY: 2 EA", confidence: 0.94),
+            OCRResult(text: "Dallas, TX 75001", confidence: 0.92),
+            OCRResult(text: "Total $100.00", confidence: 0.97)
+        ]
+        
+        let receipt = DocumentProcessor.shared.parseReceipt(from: results)
+        
+        XCTAssertEqual(receipt.state, "TX")
+    }
 }

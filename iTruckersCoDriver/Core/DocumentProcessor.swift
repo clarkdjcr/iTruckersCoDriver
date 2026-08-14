@@ -97,21 +97,26 @@ class DocumentProcessor {
             data.confidence = Double(results.reduce(0) { $0 + $1.confidence }) / Double(results.count)
         }
 
-        data.vendorName = lines.first { line in
-            let lower = line.lowercased()
-            return line.count > 2 &&
-                !lower.contains("receipt") &&
-                !lower.contains("invoice") &&
-                !lower.contains("welcome") &&
-                extractDollarAmount(from: line) == nil
-        }?.trimmingCharacters(in: .whitespacesAndNewlines)
-
         if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) {
             for line in lines where data.date == nil {
                 let range = NSRange(location: 0, length: (line as NSString).length)
                 data.date = detector.firstMatch(in: line, range: range)?.date
             }
         }
+
+        data.vendorName = lines.first { line in
+            let lower = line.lowercased()
+            let range = NSRange(location: 0, length: (line as NSString).length)
+            let containsDate = (try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue))?
+                .firstMatch(in: line, range: range) != nil
+            
+            return line.count > 2 &&
+                !lower.contains("receipt") &&
+                !lower.contains("invoice") &&
+                !lower.contains("welcome") &&
+                !containsDate &&
+                extractDollarAmount(from: line) == nil
+        }?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         for line in lines {
             let text = line.lowercased()
@@ -276,16 +281,21 @@ class DocumentProcessor {
     }
     
     private func extractState(from text: String) -> String? {
+        let validStates: Set<String> = [
+            "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+            "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"
+        ]
         let pattern = #"\b[A-Z]{2}\b"#
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsString = text as NSString
         let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length))
         
-        // Return the first match that looks like a state code
+        // Return the first match that looks like a valid state code
         for match in results ?? [] {
             let state = nsString.substring(with: match.range)
-            // Common states list or just return if it's 2 chars
-            return state
+            if validStates.contains(state) {
+                return state
+            }
         }
         return nil
     }

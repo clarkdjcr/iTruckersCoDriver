@@ -16,7 +16,7 @@ struct ReceiptDraft: Identifiable {
     let id = UUID()
     var sourceName: String
     var pageNumber: Int
-    var imageData: Data
+    var imageURL: URL
     var vendorName: String
     var date: Date
     var amount: Double
@@ -33,10 +33,10 @@ struct ReceiptDraft: Identifiable {
     var businessUsePercent: Double = 100
     var isSelected = true
 
-    init(sourceName: String, pageNumber: Int, imageData: Data, receipt: ReceiptData, driverType: DriverType) {
+    init(sourceName: String, pageNumber: Int, imageURL: URL, receipt: ReceiptData, driverType: DriverType) {
         self.sourceName = sourceName
         self.pageNumber = pageNumber
-        self.imageData = imageData
+        self.imageURL = imageURL
         self.vendorName = receipt.vendorName ?? ""
         self.date = receipt.date ?? Date()
         self.amount = receipt.totalPrice ?? 0
@@ -131,6 +131,9 @@ struct BatchReceiptImportView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .onDisappear {
+                cleanUpDraftFiles()
+            }
         }
     }
 
@@ -185,34 +188,49 @@ struct BatchReceiptImportView: View {
 
         for url in urls {
             let accessed = url.startAccessingSecurityScopedResource()
-            defer {
+            guard let document = PDFDocument(url: url) else {
                 if accessed { url.stopAccessingSecurityScopedResource() }
+                continue
             }
-            guard let document = PDFDocument(url: url) else { continue }
+            let pageCount = document.pageCount
+            let filename = url.lastPathComponent
 
-            for index in 0..<document.pageCount {
-                defer { processedPages += 1 }
-                guard let page = document.page(at: index) else { continue }
-                let image = page.thumbnail(of: CGSize(width: 1800, height: 2400), for: .mediaBox)
-                guard let cgImage = image.cgImage,
-                      let imageData = image.jpegData(compressionQuality: 0.8) else { continue }
+            for index in 0..<pageCount {
+                let pageResult: (URL, [OCRResult], ReceiptData)? = await Task.detached(priority: .userInitiated) {
+                    guard let page = document.page(at: index) else { return nil }
+                    let image = page.thumbnail(of: CGSize(width: 1800, height: 2400), for: .mediaBox)
+                    guard let cgImage = image.cgImage,
+                          let imageData = image.jpegData(compressionQuality: 0.8) else { return nil }
 
-                do {
-                    let results = try await DocumentProcessor.shared.extractText(from: cgImage)
-                    let receipt = DocumentProcessor.shared.parseReceipt(from: results)
+                    let tempDir = FileManager.default.temporaryDirectory
+                    let fileURL = tempDir.appendingPathComponent("receipt-draft-\(UUID().uuidString).jpg")
+                    do {
+                        try imageData.write(to: fileURL)
+                        let results = try await DocumentProcessor.shared.extractText(from: cgImage)
+                        let receipt = DocumentProcessor.shared.parseReceipt(from: results)
+                        return (fileURL, results, receipt)
+                    } catch {
+                        return nil
+                    }
+                }.value
+
+                if let (fileURL, _, receipt) = pageResult {
                     drafts.append(
                         ReceiptDraft(
-                            sourceName: url.lastPathComponent,
+                            sourceName: filename,
                             pageNumber: index + 1,
-                            imageData: imageData,
+                            imageURL: fileURL,
                             receipt: receipt,
                             driverType: appState.driverType
                         )
                     )
-                } catch {
+                } else {
                     errorMessage = "Some PDF pages could not be read. You can retry those pages individually."
                 }
+                processedPages += 1
             }
+
+            if accessed { url.stopAccessingSecurityScopedResource() }
         }
 
         isProcessing = false
@@ -258,7 +276,7 @@ struct BatchReceiptImportView: View {
             expense.ocrConfidence = draft.ocrConfidence
             expense.isVerified = true
             expense.receiptFingerprint = fingerprint
-            expense.receiptImageData = draft.imageData
+            expense.receiptImageData = try? Data(contentsOf: draft.imageURL)
             modelContext.insert(expense)
 
             if appState.driverType == .ownerOperator, draft.bucket == .fuel, draft.gallons > 0 {
@@ -291,6 +309,13 @@ struct BatchReceiptImportView: View {
         }
     }
 
+    private func cleanUpDraftFiles() {
+        let fm = FileManager.default
+        for draft in drafts {
+            try? fm.removeItem(at: draft.imageURL)
+        }
+    }
+
     private func receiptFingerprint(vendor: String, date: Date, amount: Double) -> String {
         guard amount > 0 else { return "" }
         let normalizedVendor = vendor.lowercased().filter { $0.isLetter || $0.isNumber }
@@ -305,7 +330,7 @@ private struct ReceiptDraftRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let image = UIImage(data: draft.imageData) {
+            if let image = UIImage(contentsOfFile: draft.imageURL.path) {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
@@ -343,7 +368,7 @@ private struct ReceiptDraftEditor: View {
 
     var body: some View {
         Form {
-            if let image = UIImage(data: draft.imageData) {
+            if let image = UIImage(contentsOfFile: draft.imageURL.path) {
                 Section {
                     Image(uiImage: image)
                         .resizable()

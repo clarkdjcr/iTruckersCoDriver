@@ -118,12 +118,29 @@ enum ExpenseReport {
 
         let data = renderer.pdfData { ctx in
             var y: CGFloat = margin
+            var pageNumber = 1
             ctx.beginPage()
+
+            func drawPageNumber(_ num: Int) {
+                let text = "Page \(num)"
+                let font = UIFont.systemFont(ofSize: 9)
+                let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: UIColor.gray]
+                let size = text.size(withAttributes: attrs)
+                let x = (pageWidth - size.width) / 2
+                let yPos = pageHeight - margin + 15
+                text.draw(at: CGPoint(x: x, y: yPos), withAttributes: attrs)
+            }
+
+            func beginNewPage() {
+                drawPageNumber(pageNumber)
+                ctx.beginPage()
+                y = margin
+                pageNumber += 1
+            }
 
             func newPageIfNeeded(_ needed: CGFloat) {
                 if y + needed > pageHeight - margin {
-                    ctx.beginPage()
-                    y = margin
+                    beginNewPage()
                 }
             }
 
@@ -209,7 +226,7 @@ enum ExpenseReport {
             let df2 = DateFormatter(); df2.dateFormat = "MMM d, yyyy"
             for e in rows where e.receiptImageData != nil {
                 guard let data = e.receiptImageData, let image = UIImage(data: data) else { continue }
-                ctx.beginPage()
+                beginNewPage()
                 y = margin
                 let caption = "\(e.bucket.displayName) · \(df2.string(from: e.date)) · \(currency(e.amount))"
                 draw(caption, font: .boldSystemFont(ofSize: 12))
@@ -224,6 +241,9 @@ enum ExpenseReport {
                 let drawH = image.size.height * scale
                 image.draw(in: CGRect(x: margin, y: y, width: drawW, height: drawH))
             }
+
+            // Draw page number on the last page of the report
+            drawPageNumber(pageNumber)
         }
 
         return try write(data, filename: "iTrucker-TaxReport-\(quarter.id).pdf")
